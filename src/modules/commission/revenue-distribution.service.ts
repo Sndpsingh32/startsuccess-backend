@@ -1,0 +1,168 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Connection, Model, Types } from 'mongoose';
+import { Purchase, PurchaseDocument } from '../purchases/purchase.schema';
+import { Commission, CommissionDocument } from './schemas/commission.schema';
+import { User, UserDocument } from '../users/user.schema';
+import { WalletRepository } from '../wallet/wallet.repository';
+import { SettingsService } from '../settings/settings.service';
+import { CourseDocument } from '../courses/course.schema';
+import { PaymentStatus, WalletTransactionType } from '../../common/constants/app.constants';
+
+@Injectable()
+export class RevenueDistributionService {
+  private readonly logger = new Logger(RevenueDistributionService.name);
+
+  constructor(
+    @InjectConnection() private readonly connection: Connection,
+    @InjectModel(Purchase.name) private readonly purchaseModel: Model<PurchaseDocument>,
+    @InjectModel(Commission.name) private readonly commissionModel: Model<CommissionDocument>,
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    private readonly walletRepo: WalletRepository,
+    private readonly settingsService: SettingsService,
+  ) {}
+
+  async distributePurchase(
+    purchase: PurchaseDocument,
+    course: CourseDocument,
+    couponOwner: UserDocument,
+  ): Promise<void> {
+    if (purchase.commissionsDistributed) return;
+
+    const settings = await this.settingsService.getGlobal();
+    const total = purchase.amount;
+    const ownerPct = settings.couponOwnerPercent;
+    const platPct = settings.platformPercent;
+    const parentPct = settings.directParentPercent;
+
+    const ownerAmount = round2((total * ownerPct) / 100);
+    let platformAmount = round2((total * platPct) / 100);
+    let parentAmount = round2((total * parentPct) / 100);
+
+    const parentId = couponOwner.referredBy ? (couponOwner.referredBy as Types.ObjectId).toString() : null;
+    if (!parentId) {
+      platformAmount = round2(platformAmount + parentAmount);
+      parentAmount = 0;
+    }
+
+    const purchaseOid = (purchase as any)._id as Types.ObjectId;
+    const purchaseId = purchaseOid.toString();
+    const ownerId = (couponOwner as any)._id.toString();
+
+    const commissions: Partial<Commission>[] = [
+      {
+        purchaseId: purchaseOid,
+        beneficiaryUserId: new Types.ObjectId(ownerId),
+        beneficiaryRole: 'coupon_owner',
+        incomeCategory: 'active',
+        amount: ownerAmount,
+        currency: purchase.currency || 'INR',
+        percentApplied: ownerPct,
+      },
+      {
+        purchaseId: purchaseOid,
+        beneficiaryUserId: null,
+        beneficiaryRole: 'platform',
+        incomeCategory: 'platform',
+        amount: platformAmount,
+        currency: purchase.currency || 'INR',
+        percentApplied: platPct + (!parentId ? parentPct : 0),
+      },
+    ];
+
+    if (parentId && parentAmount > 0) {
+      commissions.push({
+        purchaseId: purchaseOid,
+        beneficiaryUserId: new Types.ObjectId(parentId),
+        beneficiaryRole: 'direct_parent',
+        incomeCategory: 'passive',
+        amount: parentAmount,
+        currency: purchase.currency || 'INR',
+        percentApplied: parentPct,
+      });
+    }
+
+    const session = await this.connection.startSession();
+    try {
+      await session.withTransaction(async () => {
+        await this.commissionModel.insertMany(commissions as Commission[], { session });
+
+        await this.walletRepo.adjustAvailable(
+          ownerId,
+          ownerAmount,
+          WalletTransactionType.AFFILIATE_COMMISSION_ACTIVE,
+          { purchaseId, meta: { courseId: (course as any)._id?.toString?.() } },
+          session,
+        );
+        await this.userModel.findByIdAndUpdate(
+          ownerId,
+          { $inc: { activeIncome: ownerAmount } },
+          { session },
+        );
+
+        if (parentId && parentAmount > 0) {
+          await this.walletRepo.adjustAvailable(
+            parentId,
+            parentAmount,
+            WalletTransactionType.AFFILIATE_COMMISSION_PASSIVE,
+            { purchaseId, meta: { courseId: (course as any)._id?.toString?.() } },
+            session,
+          );
+          await this.userModel.findByIdAndUpdate(
+            parentId,
+            { $inc: { passiveIncome: parentAmount } },
+            { session },
+          );
+        }
+
+        await this.purchaseModel.findByIdAndUpdate(
+          purchaseOid,
+          {
+            commissionsDistributed: true,
+            paymentStatus: PaymentStatus.COMPLETED,
+          },
+          { session },
+        );
+      });
+    } finally {
+      await session.endSession();
+    }
+
+    this.logger.log(`Distributed commissions for purchase ${purchaseId}`);
+  }
+
+  async distributePlatformOnly(purchase: PurchaseDocument): Promise<void> {
+    if (purchase.commissionsDistributed) return;
+    const purchaseOid = (purchase as any)._id as Types.ObjectId;
+    const session = await this.connection.startSession();
+    try {
+      await session.withTransaction(async () => {
+        await this.commissionModel.create(
+          [
+            {
+              purchaseId: purchaseOid,
+              beneficiaryUserId: null,
+              beneficiaryRole: 'platform',
+              incomeCategory: 'platform',
+              amount: purchase.amount,
+              currency: purchase.currency || 'INR',
+              percentApplied: 100,
+            },
+          ],
+          { session },
+        );
+        await this.purchaseModel.findByIdAndUpdate(
+          purchaseOid,
+          { commissionsDistributed: true, paymentStatus: PaymentStatus.COMPLETED },
+          { session },
+        );
+      });
+    } finally {
+      await session.endSession();
+    }
+  }
+}
+
+function round2(n: number) {
+  return Math.round(n * 100) / 100;
+}

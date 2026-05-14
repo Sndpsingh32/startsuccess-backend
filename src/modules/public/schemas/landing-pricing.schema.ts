@@ -1,0 +1,46 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
+
+export type LandingPricingDocument = LandingPricing & Document;
+
+const PricingTierSchema = {
+  id: { type: String, required: true },
+  name: { type: String, required: true },
+  tagline: { type: String, required: true },
+  price: { type: Number, required: true },
+  period: { type: String, required: true },
+  features: { type: [String], default: [] },
+  highlight: { type: Boolean, default: false },
+  badge: { type: String },
+  chip: { type: String, required: true },
+  savings: { type: String, required: true },
+  description: { type: String, required: true },
+  /** Tailwind gradient classes for cover top wash, e.g. `from-primary/70 via-primary/40 to-transparent` */
+  accent: { type: String, required: true },
+};
+
+export type LandingPricingTier = {
+  id: string;
+  name: string;
+  tagline: string;
+  price: number;
+  period: string;
+  features: string[];
+  highlight?: boolean;
+  badge?: string;
+  chip: string;
+  savings: string;
+  description: string;
+  accent: string;
+};
+
+@Schema({ timestamps: true, collection: 'landingPricing' })
+export class LandingPricing {
+  @Prop({ unique: true, default: 'default' })
+  key: string;
+
+  @Prop({ type: [PricingTierSchema], default: [] })
+  tiers: LandingPricingTier[];
+}
+
+export const LandingPricingSchema = SchemaFactory.createForClass(LandingPricing);

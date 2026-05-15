@@ -12,10 +12,11 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PublicService = exports.DEFAULT_LANDING_PRICING_TIERS = exports.DEFAULT_LANDING_HERO = void 0;
+exports.PublicService = exports.DEFAULT_PRICING_COMPARE_ROWS = exports.DEFAULT_LANDING_PRICING_TIERS = exports.DEFAULT_LANDING_HERO = void 0;
 const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const config_1 = require("@nestjs/config");
+const class_transformer_1 = require("class-transformer");
 const mongoose_2 = require("mongoose");
 const landing_hero_schema_1 = require("./schemas/landing-hero.schema");
 const landing_pricing_schema_1 = require("./schemas/landing-pricing.schema");
@@ -158,6 +159,14 @@ exports.DEFAULT_LANDING_PRICING_TIERS = [
         accent: 'from-accent/80 via-accent/35 to-transparent',
     },
 ];
+exports.DEFAULT_PRICING_COMPARE_ROWS = [
+    { label: 'Course access', cells: ['10 starter', 'All 200+', 'All 200+ + future'] },
+    { label: 'Mentor support', cells: ['—', 'Group sessions', '1-on-1 weekly'] },
+    { label: 'Project reviews', cells: ['—', '✓', 'Priority'] },
+    { label: 'Certificates', cells: ['Basic', 'Verified', 'Verified + LinkedIn'] },
+    { label: 'Job placement', cells: ['—', '—', '✓'] },
+    { label: 'Offline downloads', cells: ['—', '✓', '✓'] },
+];
 let PublicService = class PublicService {
     constructor(landingModel, landingPricingModel, courseModel, categoryModel, config) {
         this.landingModel = landingModel;
@@ -222,6 +231,16 @@ let PublicService = class PublicService {
         const mediaBase = this.config.get('media.publicBase') || '';
         return (0, course_mapper_1.mapCourseToExplorerDto)(c, name, mediaBase);
     }
+    async listPublishedCoursesExplorer() {
+        const list = await this.courseModel
+            .find({ isPublished: true })
+            .sort({ salesCount: -1, createdAt: -1 })
+            .lean()
+            .exec();
+        const catMap = await this.categoryNameMap();
+        const mediaBase = this.config.get('media.publicBase') || '';
+        return list.map((c) => (0, course_mapper_1.mapCourseToExplorerDto)(c, catMap.get(c.categoryId?.toString()) || 'General', mediaBase));
+    }
     async updateLandingHero(patch) {
         const { key, ...rest } = patch;
         return this.landingModel
@@ -231,18 +250,42 @@ let PublicService = class PublicService {
     async ensureLandingPricing() {
         let doc = await this.landingPricingModel.findOne({ key: 'default' }).exec();
         if (!doc) {
-            doc = await this.landingPricingModel.create({
+            return this.landingPricingModel.create({
                 key: 'default',
                 tiers: exports.DEFAULT_LANDING_PRICING_TIERS,
+                compareRows: exports.DEFAULT_PRICING_COMPARE_ROWS,
             });
+        }
+        const updates = {};
+        if (!doc.tiers?.length)
+            updates.tiers = exports.DEFAULT_LANDING_PRICING_TIERS;
+        if (!doc.compareRows?.length)
+            updates.compareRows = exports.DEFAULT_PRICING_COMPARE_ROWS;
+        if (Object.keys(updates).length) {
+            return this.landingPricingModel
+                .findOneAndUpdate({ key: 'default' }, { $set: updates }, { new: true })
+                .exec();
         }
         return doc;
     }
     async getPricingPlansPayload() {
         const doc = await this.ensureLandingPricing();
-        return {
-            tiers: doc.tiers?.length ? doc.tiers : exports.DEFAULT_LANDING_PRICING_TIERS,
+        const tiers = doc.tiers?.length ? doc.tiers : exports.DEFAULT_LANDING_PRICING_TIERS;
+        const tc = tiers.length;
+        const padCells = (cells) => {
+            const out = (cells || []).slice(0, tc);
+            while (out.length < tc)
+                out.push('—');
+            return out;
         };
+        const compareRows = doc.compareRows?.length &&
+            doc.compareRows.every((r) => Array.isArray(r.cells) && r.cells.length === tc)
+            ? doc.compareRows
+            : exports.DEFAULT_PRICING_COMPARE_ROWS.map((row) => ({
+                label: row.label,
+                cells: padCells(row.cells),
+            }));
+        return { tiers, compareRows };
     }
     validatePricingTiers(tiers) {
         if (!Array.isArray(tiers) || tiers.length < 1 || tiers.length > 12) {
@@ -263,6 +306,15 @@ let PublicService = class PublicService {
                 throw new common_1.BadRequestException(`Tier ${t.id}: period required`);
             if (!Array.isArray(t.features))
                 throw new common_1.BadRequestException(`Tier ${t.id}: features must be an array`);
+            if (t.features.length < 1) {
+                throw new common_1.BadRequestException(`Tier ${t.id}: add at least one plan benefit in features[]`);
+            }
+            for (let fi = 0; fi < t.features.length; fi++) {
+                const line = t.features[fi];
+                if (typeof line !== 'string' || !line.trim()) {
+                    throw new common_1.BadRequestException(`Tier ${t.id}: features[${fi}] must be a non-empty string`);
+                }
+            }
             for (const field of ['tagline', 'chip', 'savings', 'description', 'accent']) {
                 if (typeof t[field] !== 'string' || !t[field].trim()) {
                     throw new common_1.BadRequestException(`Tier ${t.id}: ${field} is required`);
@@ -270,13 +322,42 @@ let PublicService = class PublicService {
             }
         }
     }
+    validateCompareRows(rows, tierCount) {
+        if (!Array.isArray(rows) || rows.length < 1 || rows.length > 40) {
+            throw new common_1.BadRequestException('compareRows must be a non-empty array (max 40)');
+        }
+        let i = 0;
+        for (const r of rows) {
+            i += 1;
+            if (!r.label?.trim())
+                throw new common_1.BadRequestException(`compareRows row ${i}: label required`);
+            if (!Array.isArray(r.cells) || r.cells.length !== tierCount) {
+                throw new common_1.BadRequestException(`compareRows row "${r.label}": expected ${tierCount} cells (one per tier), got ${r.cells?.length ?? 0}`);
+            }
+        }
+    }
     async updateLandingPricing(body) {
+        if (!body.tiers?.length && !body.compareRows?.length) {
+            throw new common_1.BadRequestException('Provide tiers and/or compareRows to update (at least one non-empty array)');
+        }
+        const plain = (0, class_transformer_1.instanceToPlain)(body);
         await this.ensureLandingPricing();
-        if (body.tiers) {
-            this.validatePricingTiers(body.tiers);
-            return this.landingPricingModel
-                .findOneAndUpdate({ key: 'default' }, { $set: { tiers: body.tiers } }, { new: true })
-                .exec();
+        const current = await this.landingPricingModel.findOne({ key: 'default' }).lean().exec();
+        const nextTiers = plain.tiers ?? current?.tiers ?? exports.DEFAULT_LANDING_PRICING_TIERS;
+        const tierCount = Array.isArray(nextTiers) ? nextTiers.length : 0;
+        if (!tierCount)
+            throw new common_1.BadRequestException('No pricing tiers configured');
+        const $set = {};
+        if (plain.tiers?.length) {
+            this.validatePricingTiers(plain.tiers);
+            $set.tiers = plain.tiers;
+        }
+        if (plain.compareRows?.length) {
+            this.validateCompareRows(plain.compareRows, plain.tiers?.length ?? tierCount);
+            $set.compareRows = plain.compareRows;
+        }
+        if (Object.keys($set).length) {
+            return this.landingPricingModel.findOneAndUpdate({ key: 'default' }, { $set }, { new: true }).exec();
         }
         return this.landingPricingModel.findOne({ key: 'default' }).exec();
     }

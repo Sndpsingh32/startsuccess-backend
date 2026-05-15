@@ -64,7 +64,11 @@ export class AuthService {
       if (referrer) referredBy = (referrer as any)._id.toString();
     }
     const user = await this.usersService.create({ name, email, password, referredBy } as any);
-    const fresh = await this.usersService.findById((user as any)._id.toString());
+    const uid = (user as any)._id.toString();
+    if (referralCode && referredBy) {
+      await this.usersService.setLockedAffiliateCouponIfUnset(uid, referralCode);
+    }
+    const fresh = await this.usersService.findById(uid);
     return this.login(fresh);
   }
 

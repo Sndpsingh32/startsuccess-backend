@@ -12,6 +12,7 @@ export declare class UsersService {
     findByEmail(email: string, withPassword?: boolean): Promise<UserDocument | null>;
     findByReferralCode(code: string): Promise<UserDocument | null>;
     findById(id: string): Promise<UserDocument | null>;
+    setLockedAffiliateCouponIfUnset(userId: string, code: string): Promise<void>;
     updateRefreshTokenHash(userId: string, hash: string | null): Promise<void>;
     findWithRefreshHash(id: string): Promise<UserDocument | null>;
     updateIncome(userId: string, active: number, passive: number, session?: any): Promise<void>;

@@ -3,6 +3,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const node_fs_1 = require("node:fs");
+const node_path_1 = require("node:path");
 const core_1 = require("@nestjs/core");
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
@@ -16,7 +18,9 @@ const http_exception_filter_1 = require("./common/filters/http-exception.filter"
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule, { rawBody: true });
     const config = app.get(config_1.ConfigService);
-    app.use((0, helmet_1.default)());
+    app.use((0, helmet_1.default)({
+        crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }));
     app.use((0, compression_1.default)());
     app.use((0, express_mongo_sanitize_1.default)());
     app.useWebSocketAdapter(new platform_socket_io_1.IoAdapter(app));
@@ -24,6 +28,13 @@ async function bootstrap() {
         origin: config.get('cors.origin'),
         credentials: true,
     });
+    const uploadDirName = config.get('media.uploadDir') || 'uploads';
+    const uploadRoot = (0, node_path_1.join)(process.cwd(), uploadDirName);
+    const videosDir = (0, node_path_1.join)(uploadRoot, 'videos');
+    if (!(0, node_fs_1.existsSync)(videosDir)) {
+        (0, node_fs_1.mkdirSync)(videosDir, { recursive: true });
+    }
+    app.useStaticAssets(uploadRoot, { prefix: '/uploads/' });
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
         transform: true,

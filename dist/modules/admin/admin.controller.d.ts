@@ -1,3 +1,5 @@
+import { ConfigService } from '@nestjs/config';
+import type { Request } from 'express';
 import { UsersService } from '../users/users.service';
 import { CoursesService } from '../courses/courses.service';
 import { Model } from 'mongoose';
@@ -5,8 +7,9 @@ import { CommissionDocument } from '../commission/schemas/commission.schema';
 export declare class AdminController {
     private users;
     private coursesService;
+    private readonly config;
     private commissionModel;
-    constructor(users: UsersService, coursesService: CoursesService, commissionModel: Model<CommissionDocument>);
+    constructor(users: UsersService, coursesService: CoursesService, config: ConfigService, commissionModel: Model<CommissionDocument>);
     stats(): Promise<{
         totalUsers: number;
         totalCourses: number;
@@ -34,4 +37,16 @@ export declare class AdminController {
     }>;
     referrals(id: string): Promise<any>;
     listCourses(): Promise<import("../courses/course.schema").Course[]>;
+    uploadCourseVideo(file: {
+        path: string;
+        filename: string;
+        originalname: string;
+        mimetype: string;
+        size: number;
+    } | undefined, req: Request): Promise<{
+        path: string;
+        url: string;
+        filename: string;
+        size: number;
+    }>;
 }

@@ -218,6 +218,10 @@ async function run() {
             console.log('Seeded course', sc.slug);
         }
     }
+    console.log('\n--- Admin (admin panel sign-in) ---');
+    console.log('Email:', adminEmail);
+    console.log('Password: Admin123!');
+    console.log('(If this admin already existed before seed, password was not reset — use your saved password or update the user in DB.)');
     await app.close();
 }
 run().catch((e) => {

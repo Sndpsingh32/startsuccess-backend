@@ -41,6 +41,23 @@ export class PurchasesService {
     }
 
     const buyerOid = new Types.ObjectId(purchase.buyerId);
+    const buyerIdStr = purchase.buyerId;
+    const buyer = await this.usersService.findById(buyerIdStr);
+    const locked = buyer?.lockedAffiliateCoupon?.trim?.()?.toUpperCase?.() || null;
+    const requested = purchase.couponUsed?.trim?.()?.toUpperCase?.() || undefined;
+
+    let effectiveCoupon: string | undefined;
+    if (locked) {
+      if (requested && requested !== locked) {
+        throw new BadRequestException(
+          `Affiliate attribution is locked to referral code ${locked} from your first signup or purchase. You cannot use a different code.`,
+        );
+      }
+      effectiveCoupon = locked;
+    } else {
+      effectiveCoupon = requested;
+    }
+
     const courseOid = new Types.ObjectId(purchase.courseId as any);
 
     const dup = await this.purchaseModel
@@ -54,10 +71,13 @@ export class PurchasesService {
 
     const settings = await this.settingsService.getGlobal();
     let couponOwner = null as any;
-    if (purchase.couponUsed) {
-      couponOwner = await this.usersService.findByReferralCode(purchase.couponUsed);
+    if (effectiveCoupon) {
+      couponOwner = await this.usersService.findByReferralCode(effectiveCoupon);
       if (!couponOwner) throw new BadRequestException('Invalid coupon code');
-      if (!course.couponApplicable) throw new BadRequestException('Coupons not allowed for this course');
+      const isLockedAttribution = Boolean(locked && effectiveCoupon === locked);
+      if (!isLockedAttribution && !course.couponApplicable) {
+        throw new BadRequestException('Coupons not allowed for this course');
+      }
       if (settings.fraudBlockCouponOwnerPurchase && couponOwner._id.equals(buyerOid)) {
         throw new BadRequestException('Cannot purchase using your own coupon');
       }
@@ -66,7 +86,7 @@ export class PurchasesService {
     const doc = new this.purchaseModel({
       courseId: courseOid,
       buyerId: buyerOid,
-      couponUsed: purchase.couponUsed?.toUpperCase?.() || purchase.couponUsed,
+      couponUsed: effectiveCoupon,
       amount: paid,
       currency: purchase.currency || 'INR',
       paymentStatus: PaymentStatus.PENDING,
@@ -84,6 +104,9 @@ export class PurchasesService {
     if (couponOwner) {
       await this.revenueDistributionService.distributePurchase(saved, course as any, couponOwner);
       await this.coursesService.incrementSales((course as any)._id.toString());
+      if (effectiveCoupon) {
+        await this.usersService.setLockedAffiliateCouponIfUnset(buyerIdStr, effectiveCoupon);
+      }
     } else {
       await this.revenueDistributionService.distributePlatformOnly(saved);
       await this.coursesService.incrementSales((course as any)._id.toString());
@@ -98,6 +121,20 @@ export class PurchasesService {
       .sort({ createdAt: -1 })
       .lean()
       .exec() as any;
+  }
+
+  /** Learner can stream all lesson videos (not only free previews). */
+  async hasCompletedCourseAccess(userId: string, courseObjectId: Types.ObjectId): Promise<boolean> {
+    const p = await this.purchaseModel
+      .findOne({
+        buyerId: new Types.ObjectId(userId),
+        courseId: courseObjectId,
+        paymentStatus: PaymentStatus.COMPLETED,
+      })
+      .select({ _id: 1 })
+      .lean()
+      .exec();
+    return Boolean(p);
   }
 
   async findByCoupon(coupon: string): Promise<Purchase[]> {

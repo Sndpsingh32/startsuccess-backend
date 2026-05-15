@@ -15,6 +15,7 @@ const user_schema_1 = require("./user.schema");
 const purchases_module_1 = require("../purchases/purchases.module");
 const wallet_module_1 = require("../wallet/wallet.module");
 const analytics_module_1 = require("../analytics/analytics.module");
+const courses_module_1 = require("../courses/courses.module");
 let UsersModule = class UsersModule {
 };
 exports.UsersModule = UsersModule;
@@ -23,6 +24,7 @@ exports.UsersModule = UsersModule = __decorate([
         imports: [
             mongoose_1.MongooseModule.forFeature([{ name: user_schema_1.User.name, schema: user_schema_1.UserSchema }]),
             (0, common_1.forwardRef)(() => purchases_module_1.PurchasesModule),
+            courses_module_1.CoursesModule,
             wallet_module_1.WalletModule,
             analytics_module_1.AnalyticsModule,
         ],

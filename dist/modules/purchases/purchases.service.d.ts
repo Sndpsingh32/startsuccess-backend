@@ -16,6 +16,7 @@ export declare class PurchasesService {
         buyerId: string;
     }): Promise<Purchase>;
     findByUser(userId: string): Promise<Purchase[]>;
+    hasCompletedCourseAccess(userId: string, courseObjectId: Types.ObjectId): Promise<boolean>;
     findByCoupon(coupon: string): Promise<Purchase[]>;
     listAffiliateSales(couponCode: string, opts: {
         from?: Date;

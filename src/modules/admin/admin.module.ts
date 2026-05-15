@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AdminController } from './admin.controller';
 import { UsersModule } from '../users/users.module';
@@ -7,6 +8,7 @@ import { Commission, CommissionSchema } from '../commission/schemas/commission.s
 
 @Module({
   imports: [
+    ConfigModule,
     UsersModule,
     CoursesModule,
     MongooseModule.forFeature([{ name: Commission.name, schema: CommissionSchema }]),

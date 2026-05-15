@@ -14,9 +14,14 @@ export type LandingPricingTier = {
     description: string;
     accent: string;
 };
+export type LandingPricingCompareRow = {
+    label: string;
+    cells: string[];
+};
 export declare class LandingPricing {
     key: string;
     tiers: LandingPricingTier[];
+    compareRows: LandingPricingCompareRow[];
 }
 export declare const LandingPricingSchema: import("mongoose").Schema<LandingPricing, import("mongoose").Model<LandingPricing, any, any, any, Document<unknown, any, LandingPricing, any, {}> & LandingPricing & {
     _id: import("mongoose").Types.ObjectId;

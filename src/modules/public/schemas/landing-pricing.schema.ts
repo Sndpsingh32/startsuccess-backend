@@ -34,6 +34,17 @@ export type LandingPricingTier = {
   accent: string;
 };
 
+/** One row in the /plans compare table; `cells[i]` aligns with `tiers[i]`. */
+export type LandingPricingCompareRow = {
+  label: string;
+  cells: string[];
+};
+
+const CompareRowSchema = {
+  label: { type: String, required: true },
+  cells: { type: [String], default: [] },
+};
+
 @Schema({ timestamps: true, collection: 'landingPricing' })
 export class LandingPricing {
   @Prop({ unique: true, default: 'default' })
@@ -41,6 +52,9 @@ export class LandingPricing {
 
   @Prop({ type: [PricingTierSchema], default: [] })
   tiers: LandingPricingTier[];
+
+  @Prop({ type: [CompareRowSchema], default: [] })
+  compareRows: LandingPricingCompareRow[];
 }
 
 export const LandingPricingSchema = SchemaFactory.createForClass(LandingPricing);

@@ -102,7 +102,11 @@ let AuthService = class AuthService {
                 referredBy = referrer._id.toString();
         }
         const user = await this.usersService.create({ name, email, password, referredBy });
-        const fresh = await this.usersService.findById(user._id.toString());
+        const uid = user._id.toString();
+        if (referralCode && referredBy) {
+            await this.usersService.setLockedAffiliateCouponIfUnset(uid, referralCode);
+        }
+        const fresh = await this.usersService.findById(uid);
         return this.login(fresh);
     }
     async refresh(refreshToken) {

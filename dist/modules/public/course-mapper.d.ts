@@ -1,4 +1,12 @@
 import { Course } from '../courses/course.schema';
+export type ExplorerCourseVideoDto = {
+    id: string;
+    title: string;
+    duration: string;
+    locked?: boolean;
+    freePreview?: boolean;
+    videoUrl?: string;
+};
 export type ExplorerCourseDto = {
     id: string;
     title: string;
@@ -12,11 +20,21 @@ export type ExplorerCourseDto = {
     price: number;
     cover: string;
     description: string;
-    videos: {
-        id: string;
-        title: string;
-        duration: string;
-        locked?: boolean;
-    }[];
+    videos: ExplorerCourseVideoDto[];
+    whatYouLearn: string[];
+    enrollmentBullets: string[];
+    bodyHtml?: string;
+    strikePrice: number;
+    discountPercent: number;
 };
+export declare function resolveMediaUrl(raw: string | undefined | null, mediaBase?: string): string | undefined;
+export type FlatLessonRow = {
+    id: string;
+    title: string;
+    durationSec: number;
+    freePreview?: boolean;
+    rawVideoUrl?: string;
+};
+export declare function flattenLessonsFromModules(modules: any): FlatLessonRow[];
+export declare function mapCourseModulesForCurriculum(course: Course | Record<string, any>, mediaBase?: string): any;
 export declare function mapCourseToExplorerDto(course: Course | Record<string, any>, categoryName: string, mediaBase?: string): ExplorerCourseDto;

@@ -37,6 +37,10 @@ __decorate([
     __metadata("design:type", mongoose_2.Types.ObjectId)
 ], User.prototype, "referredBy", void 0);
 __decorate([
+    (0, mongoose_1.Prop)({ default: null }),
+    __metadata("design:type", String)
+], User.prototype, "lockedAffiliateCoupon", void 0);
+__decorate([
     (0, mongoose_1.Prop)({ enum: app_constants_1.UserRole, default: app_constants_1.UserRole.USER }),
     __metadata("design:type", String)
 ], User.prototype, "role", void 0);

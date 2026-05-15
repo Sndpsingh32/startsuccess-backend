@@ -214,6 +214,17 @@ async function run() {
     }
   }
 
+  // eslint-disable-next-line no-console
+  console.log('\n--- Admin (admin panel sign-in) ---');
+  // eslint-disable-next-line no-console
+  console.log('Email:', adminEmail);
+  // eslint-disable-next-line no-console
+  console.log('Password: Admin123!');
+  // eslint-disable-next-line no-console
+  console.log(
+    '(If this admin already existed before seed, password was not reset — use your saved password or update the user in DB.)',
+  );
+
   await app.close();
 }
 

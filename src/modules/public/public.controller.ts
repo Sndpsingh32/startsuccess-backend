@@ -1,11 +1,12 @@
 import { Controller, Get, Param, Patch, Body, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { PublicService } from './public.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../common/constants/app.constants';
+import { PatchLandingPricingDto } from './dto/patch-landing-pricing.dto';
 
 @ApiTags('public')
 @Controller('public')
@@ -17,6 +18,12 @@ export class PublicController {
   @Get('hero')
   hero() {
     return this.publicService.getHeroPayload();
+  }
+
+  /** Published courses in explorer card/detail shape (for /courses catalog). */
+  @Get('courses')
+  listCourses() {
+    return this.publicService.listPublishedCoursesExplorer();
   }
 
   @Get('courses/:slug')
@@ -39,13 +46,20 @@ export class PublicController {
 export class LandingAdminController {
   constructor(private readonly publicService: PublicService) {}
 
+  @Get('pricing')
+  @ApiOkResponse({ description: 'Tiers (features = plan benefits) + compareRows for /plans table' })
+  getPricing() {
+    return this.publicService.getPricingPlansPayload();
+  }
+
   @Patch('hero')
   patchHero(@Body() body: Record<string, unknown>) {
     return this.publicService.updateLandingHero(body as any);
   }
 
   @Patch('pricing')
-  patchPricing(@Body() body: Record<string, unknown>) {
-    return this.publicService.updateLandingPricing(body as any);
+  @ApiBody({ type: PatchLandingPricingDto })
+  patchPricing(@Body() body: PatchLandingPricingDto) {
+    return this.publicService.updateLandingPricing(body);
   }
 }

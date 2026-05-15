@@ -22,6 +22,13 @@ export class User {
   @Prop({ type: Types.ObjectId, ref: 'User', default: null })
   referredBy: Types.ObjectId | null;
 
+  /**
+   * First valid referral / coupon code applied (signup or first purchase).
+   * All later purchases use this for commission; buyer cannot switch to another code.
+   */
+  @Prop({ default: null })
+  lockedAffiliateCoupon: string | null;
+
   @Prop({ enum: UserRole, default: UserRole.USER })
   role: UserRole;
 

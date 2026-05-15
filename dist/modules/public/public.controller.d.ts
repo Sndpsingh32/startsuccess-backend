@@ -1,4 +1,5 @@
 import { PublicService } from './public.service';
+import { PatchLandingPricingDto } from './dto/patch-landing-pricing.dto';
 export declare class PublicController {
     private readonly publicService;
     constructor(publicService: PublicService);
@@ -34,20 +35,26 @@ export declare class PublicController {
         }[];
         courses: import("./course-mapper").ExplorerCourseDto[];
     }>;
+    listCourses(): Promise<import("./course-mapper").ExplorerCourseDto[]>;
     courseBySlug(slug: string): Promise<import("./course-mapper").ExplorerCourseDto>;
     pricingPlans(): Promise<{
         tiers: import("./schemas/landing-pricing.schema").LandingPricingTier[];
+        compareRows: import("./schemas/landing-pricing.schema").LandingPricingCompareRow[];
     }>;
 }
 export declare class LandingAdminController {
     private readonly publicService;
     constructor(publicService: PublicService);
+    getPricing(): Promise<{
+        tiers: import("./schemas/landing-pricing.schema").LandingPricingTier[];
+        compareRows: import("./schemas/landing-pricing.schema").LandingPricingCompareRow[];
+    }>;
     patchHero(body: Record<string, unknown>): Promise<import("mongoose").Document<unknown, {}, import("./schemas/landing-hero.schema").LandingHeroDocument, {}, {}> & import("./schemas/landing-hero.schema").LandingHero & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {
         __v: number;
     }>;
-    patchPricing(body: Record<string, unknown>): Promise<import("mongoose").Document<unknown, {}, import("./schemas/landing-pricing.schema").LandingPricingDocument, {}, {}> & import("./schemas/landing-pricing.schema").LandingPricing & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
+    patchPricing(body: PatchLandingPricingDto): Promise<import("mongoose").Document<unknown, {}, import("./schemas/landing-pricing.schema").LandingPricingDocument, {}, {}> & import("./schemas/landing-pricing.schema").LandingPricing & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {
         __v: number;

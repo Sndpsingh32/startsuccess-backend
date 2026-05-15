@@ -1,5 +1,24 @@
-import { Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+  BadRequestException,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
+import type { Request } from 'express';
+import { diskStorage } from 'multer';
+import { randomUUID } from 'node:crypto';
+import { join, basename } from 'node:path';
+import { mkdirSync, existsSync } from 'node:fs';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -10,6 +29,29 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Commission, CommissionDocument } from '../commission/schemas/commission.schema';
 
+const MAX_VIDEO_UPLOAD_BYTES = Math.min(
+  2048 * 1024 * 1024,
+  Math.max(16 * 1024 * 1024, (parseInt(process.env.MEDIA_MAX_VIDEO_MB || '512', 10) || 512) * 1024 * 1024),
+);
+
+function courseVideoDiskStorage() {
+  const uploadDir = process.env.MEDIA_UPLOAD_DIR || 'uploads';
+  const dir = join(process.cwd(), uploadDir, 'videos');
+  return diskStorage({
+    destination: (_req, _file, cb) => {
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename: (_req, file, cb) => {
+      let ext = (file.originalname?.match(/\.[a-z0-9]+$/i)?.[0] || '').toLowerCase();
+      if (!['.mp4', '.webm', '.mov', '.m4v', '.mkv'].includes(ext)) {
+        ext = '.mp4';
+      }
+      cb(null, `${randomUUID()}${ext}`);
+    },
+  });
+}
+
 @ApiTags('admin')
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -19,6 +61,7 @@ export class AdminController {
   constructor(
     private users: UsersService,
     private coursesService: CoursesService,
+    private readonly config: ConfigService,
     @InjectModel(Commission.name) private commissionModel: Model<CommissionDocument>,
   ) {}
 
@@ -66,5 +109,53 @@ export class AdminController {
   @Get('courses')
   listCourses() {
     return this.coursesService.findAllAdmin();
+  }
+
+  /** Upload a lesson video from disk; returns `url` to paste into course modules (also stored as `path`). */
+  @Post('media/video')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+      required: ['file'],
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: courseVideoDiskStorage(),
+      limits: { fileSize: MAX_VIDEO_UPLOAD_BYTES },
+      fileFilter: (_req, file, cb) => {
+        if (!file.mimetype.startsWith('video/')) {
+          cb(new BadRequestException('Only video files are allowed (e.g. mp4, webm).') as any, false);
+          return;
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  async uploadCourseVideo(
+    @UploadedFile()
+    file:
+      | {
+          path: string;
+          filename: string;
+          originalname: string;
+          mimetype: string;
+          size: number;
+        }
+      | undefined,
+    @Req() req: Request,
+  ) {
+    if (!file?.path) {
+      throw new BadRequestException('Missing file field "file"');
+    }
+    const name = basename(file.path);
+    const relativePath = `/uploads/videos/${name}`;
+    const configuredBase = (this.config.get<string>('media.publicBase') || '').replace(/\/$/, '');
+    const inferred = `${req.protocol}://${req.get('host') || 'localhost'}`;
+    const origin = configuredBase || inferred;
+    const url = `${origin.replace(/\/$/, '')}${relativePath}`;
+    return { path: relativePath, url, filename: name, size: file.size };
   }
 }

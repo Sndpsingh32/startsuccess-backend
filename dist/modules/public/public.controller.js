@@ -21,12 +21,16 @@ const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 const roles_guard_1 = require("../../common/guards/roles.guard");
 const roles_decorator_1 = require("../../common/decorators/roles.decorator");
 const app_constants_1 = require("../../common/constants/app.constants");
+const patch_landing_pricing_dto_1 = require("./dto/patch-landing-pricing.dto");
 let PublicController = class PublicController {
     constructor(publicService) {
         this.publicService = publicService;
     }
     hero() {
         return this.publicService.getHeroPayload();
+    }
+    listCourses() {
+        return this.publicService.listPublishedCoursesExplorer();
     }
     courseBySlug(slug) {
         return this.publicService.getCourseBySlug(slug);
@@ -42,6 +46,12 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], PublicController.prototype, "hero", null);
+__decorate([
+    (0, common_1.Get)('courses'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], PublicController.prototype, "listCourses", null);
 __decorate([
     (0, common_1.Get)('courses/:slug'),
     __param(0, (0, common_1.Param)('slug')),
@@ -65,6 +75,9 @@ let LandingAdminController = class LandingAdminController {
     constructor(publicService) {
         this.publicService = publicService;
     }
+    getPricing() {
+        return this.publicService.getPricingPlansPayload();
+    }
     patchHero(body) {
         return this.publicService.updateLandingHero(body);
     }
@@ -74,6 +87,13 @@ let LandingAdminController = class LandingAdminController {
 };
 exports.LandingAdminController = LandingAdminController;
 __decorate([
+    (0, common_1.Get)('pricing'),
+    (0, swagger_1.ApiOkResponse)({ description: 'Tiers (features = plan benefits) + compareRows for /plans table' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], LandingAdminController.prototype, "getPricing", null);
+__decorate([
     (0, common_1.Patch)('hero'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -82,9 +102,10 @@ __decorate([
 ], LandingAdminController.prototype, "patchHero", null);
 __decorate([
     (0, common_1.Patch)('pricing'),
+    (0, swagger_1.ApiBody)({ type: patch_landing_pricing_dto_1.PatchLandingPricingDto }),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [patch_landing_pricing_dto_1.PatchLandingPricingDto]),
     __metadata("design:returntype", void 0)
 ], LandingAdminController.prototype, "patchPricing", null);
 exports.LandingAdminController = LandingAdminController = __decorate([

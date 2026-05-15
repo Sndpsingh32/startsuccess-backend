@@ -7,6 +7,7 @@ export declare class User {
     password: string;
     referralCode: string;
     referredBy: Types.ObjectId | null;
+    lockedAffiliateCoupon: string | null;
     role: UserRole;
     emailVerified: boolean;
     emailVerificationToken: string;

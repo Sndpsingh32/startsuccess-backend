@@ -8,6 +8,7 @@ export declare class CoursesService {
     findAllAdmin(): Promise<Course[]>;
     findById(id: string): Promise<Course | null>;
     findBySlug(slug: string): Promise<Course | null>;
+    findBySlugAny(slug: string): Promise<Course | null>;
     findByUser(userId: string): Promise<Course[]>;
     update(id: string, patch: Partial<Course>): Promise<import("mongoose").Document<unknown, {}, CourseDocument, {}, {}> & Course & import("mongoose").Document<Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
         _id: Types.ObjectId;

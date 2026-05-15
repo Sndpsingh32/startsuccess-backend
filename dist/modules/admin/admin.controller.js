@@ -14,7 +14,13 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
 const swagger_1 = require("@nestjs/swagger");
+const config_1 = require("@nestjs/config");
+const multer_1 = require("multer");
+const node_crypto_1 = require("node:crypto");
+const node_path_1 = require("node:path");
+const node_fs_1 = require("node:fs");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 const roles_guard_1 = require("../../common/guards/roles.guard");
 const roles_decorator_1 = require("../../common/decorators/roles.decorator");
@@ -24,10 +30,30 @@ const courses_service_1 = require("../courses/courses.service");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const commission_schema_1 = require("../commission/schemas/commission.schema");
+const MAX_VIDEO_UPLOAD_BYTES = Math.min(2048 * 1024 * 1024, Math.max(16 * 1024 * 1024, (parseInt(process.env.MEDIA_MAX_VIDEO_MB || '512', 10) || 512) * 1024 * 1024));
+function courseVideoDiskStorage() {
+    const uploadDir = process.env.MEDIA_UPLOAD_DIR || 'uploads';
+    const dir = (0, node_path_1.join)(process.cwd(), uploadDir, 'videos');
+    return (0, multer_1.diskStorage)({
+        destination: (_req, _file, cb) => {
+            if (!(0, node_fs_1.existsSync)(dir))
+                (0, node_fs_1.mkdirSync)(dir, { recursive: true });
+            cb(null, dir);
+        },
+        filename: (_req, file, cb) => {
+            let ext = (file.originalname?.match(/\.[a-z0-9]+$/i)?.[0] || '').toLowerCase();
+            if (!['.mp4', '.webm', '.mov', '.m4v', '.mkv'].includes(ext)) {
+                ext = '.mp4';
+            }
+            cb(null, `${(0, node_crypto_1.randomUUID)()}${ext}`);
+        },
+    });
+}
 let AdminController = class AdminController {
-    constructor(users, coursesService, commissionModel) {
+    constructor(users, coursesService, config, commissionModel) {
         this.users = users;
         this.coursesService = coursesService;
+        this.config = config;
         this.commissionModel = commissionModel;
     }
     async stats() {
@@ -63,6 +89,18 @@ let AdminController = class AdminController {
     }
     listCourses() {
         return this.coursesService.findAllAdmin();
+    }
+    async uploadCourseVideo(file, req) {
+        if (!file?.path) {
+            throw new common_1.BadRequestException('Missing file field "file"');
+        }
+        const name = (0, node_path_1.basename)(file.path);
+        const relativePath = `/uploads/videos/${name}`;
+        const configuredBase = (this.config.get('media.publicBase') || '').replace(/\/$/, '');
+        const inferred = `${req.protocol}://${req.get('host') || 'localhost'}`;
+        const origin = configuredBase || inferred;
+        const url = `${origin.replace(/\/$/, '')}${relativePath}`;
+        return { path: relativePath, url, filename: name, size: file.size };
     }
 };
 exports.AdminController = AdminController;
@@ -110,15 +148,43 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], AdminController.prototype, "listCourses", null);
+__decorate([
+    (0, common_1.Post)('media/video'),
+    (0, swagger_1.ApiConsumes)('multipart/form-data'),
+    (0, swagger_1.ApiBody)({
+        schema: {
+            type: 'object',
+            properties: { file: { type: 'string', format: 'binary' } },
+            required: ['file'],
+        },
+    }),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
+        storage: courseVideoDiskStorage(),
+        limits: { fileSize: MAX_VIDEO_UPLOAD_BYTES },
+        fileFilter: (_req, file, cb) => {
+            if (!file.mimetype.startsWith('video/')) {
+                cb(new common_1.BadRequestException('Only video files are allowed (e.g. mp4, webm).'), false);
+                return;
+            }
+            cb(null, true);
+        },
+    })),
+    __param(0, (0, common_1.UploadedFile)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "uploadCourseVideo", null);
 exports.AdminController = AdminController = __decorate([
     (0, swagger_1.ApiTags)('admin'),
     (0, common_1.Controller)('admin'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(app_constants_1.UserRole.ADMIN),
     (0, swagger_1.ApiBearerAuth)(),
-    __param(2, (0, mongoose_1.InjectModel)(commission_schema_1.Commission.name)),
+    __param(3, (0, mongoose_1.InjectModel)(commission_schema_1.Commission.name)),
     __metadata("design:paramtypes", [users_service_1.UsersService,
         courses_service_1.CoursesService,
+        config_1.ConfigService,
         mongoose_2.Model])
 ], AdminController);
 //# sourceMappingURL=admin.controller.js.map

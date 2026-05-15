@@ -48,6 +48,20 @@ let PurchasesService = class PurchasesService {
             throw new common_1.BadRequestException(`Amount must match course price (${expected})`);
         }
         const buyerOid = new mongoose_2.Types.ObjectId(purchase.buyerId);
+        const buyerIdStr = purchase.buyerId;
+        const buyer = await this.usersService.findById(buyerIdStr);
+        const locked = buyer?.lockedAffiliateCoupon?.trim?.()?.toUpperCase?.() || null;
+        const requested = purchase.couponUsed?.trim?.()?.toUpperCase?.() || undefined;
+        let effectiveCoupon;
+        if (locked) {
+            if (requested && requested !== locked) {
+                throw new common_1.BadRequestException(`Affiliate attribution is locked to referral code ${locked} from your first signup or purchase. You cannot use a different code.`);
+            }
+            effectiveCoupon = locked;
+        }
+        else {
+            effectiveCoupon = requested;
+        }
         const courseOid = new mongoose_2.Types.ObjectId(purchase.courseId);
         const dup = await this.purchaseModel
             .findOne({
@@ -60,12 +74,14 @@ let PurchasesService = class PurchasesService {
             throw new common_1.ConflictException('Course already purchased');
         const settings = await this.settingsService.getGlobal();
         let couponOwner = null;
-        if (purchase.couponUsed) {
-            couponOwner = await this.usersService.findByReferralCode(purchase.couponUsed);
+        if (effectiveCoupon) {
+            couponOwner = await this.usersService.findByReferralCode(effectiveCoupon);
             if (!couponOwner)
                 throw new common_1.BadRequestException('Invalid coupon code');
-            if (!course.couponApplicable)
+            const isLockedAttribution = Boolean(locked && effectiveCoupon === locked);
+            if (!isLockedAttribution && !course.couponApplicable) {
                 throw new common_1.BadRequestException('Coupons not allowed for this course');
+            }
             if (settings.fraudBlockCouponOwnerPurchase && couponOwner._id.equals(buyerOid)) {
                 throw new common_1.BadRequestException('Cannot purchase using your own coupon');
             }
@@ -73,7 +89,7 @@ let PurchasesService = class PurchasesService {
         const doc = new this.purchaseModel({
             courseId: courseOid,
             buyerId: buyerOid,
-            couponUsed: purchase.couponUsed?.toUpperCase?.() || purchase.couponUsed,
+            couponUsed: effectiveCoupon,
             amount: paid,
             currency: purchase.currency || 'INR',
             paymentStatus: app_constants_1.PaymentStatus.PENDING,
@@ -90,6 +106,9 @@ let PurchasesService = class PurchasesService {
         if (couponOwner) {
             await this.revenueDistributionService.distributePurchase(saved, course, couponOwner);
             await this.coursesService.incrementSales(course._id.toString());
+            if (effectiveCoupon) {
+                await this.usersService.setLockedAffiliateCouponIfUnset(buyerIdStr, effectiveCoupon);
+            }
         }
         else {
             await this.revenueDistributionService.distributePlatformOnly(saved);
@@ -103,6 +122,18 @@ let PurchasesService = class PurchasesService {
             .sort({ createdAt: -1 })
             .lean()
             .exec();
+    }
+    async hasCompletedCourseAccess(userId, courseObjectId) {
+        const p = await this.purchaseModel
+            .findOne({
+            buyerId: new mongoose_2.Types.ObjectId(userId),
+            courseId: courseObjectId,
+            paymentStatus: app_constants_1.PaymentStatus.COMPLETED,
+        })
+            .select({ _id: 1 })
+            .lean()
+            .exec();
+        return Boolean(p);
     }
     async findByCoupon(coupon) {
         return this.purchaseModel

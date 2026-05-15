@@ -27,6 +27,8 @@ declare const _default: () => {
     frontendUrl: string;
     media: {
         publicBase: string;
+        uploadDir: string;
+        maxVideoMb: number;
     };
     platform: {
         userId: string;

@@ -6,11 +6,13 @@ import { User, UserSchema } from './user.schema';
 import { PurchasesModule } from '../purchases/purchases.module';
 import { WalletModule } from '../wallet/wallet.module';
 import { AnalyticsModule } from '../analytics/analytics.module';
+import { CoursesModule } from '../courses/courses.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     forwardRef(() => PurchasesModule),
+    CoursesModule,
     WalletModule,
     AnalyticsModule,
   ],

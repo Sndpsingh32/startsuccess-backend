@@ -22,12 +22,17 @@ export default () => ({
     webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || '',
   },
   cors: {
-    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173', 'http://localhost:3000'],
+    origin:
+      process.env.CORS_ORIGIN?.split(',') ||
+      ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
   },
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
   /** Prefix for course media stored as paths like /uploads/... */
   media: {
     publicBase: (process.env.PUBLIC_MEDIA_BASE || '').replace(/\/$/, ''),
+    /** Directory under process.cwd() where uploaded videos are stored */
+    uploadDir: (process.env.MEDIA_UPLOAD_DIR || 'uploads').replace(/^\/+|\/+$/g, ''),
+    maxVideoMb: Math.min(2048, Math.max(16, parseInt(process.env.MEDIA_MAX_VIDEO_MB || '512', 10) || 512)),
   },
   platform: {
     userId: process.env.PLATFORM_WALLET_USER_ID || '000000000000000000000000',

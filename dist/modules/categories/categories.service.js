@@ -22,7 +22,11 @@ let CategoriesService = class CategoriesService {
         this.model = model;
     }
     create(d) {
-        return new this.model(d).save();
+        const doc = { ...d };
+        if (!doc.slug && doc.name) {
+            doc.slug = slugify(doc.name);
+        }
+        return new this.model(doc).save();
     }
     findAll() {
         return this.model.find().sort({ order: 1, name: 1 }).lean();
@@ -46,4 +50,11 @@ exports.CategoriesService = CategoriesService = __decorate([
     __param(0, (0, mongoose_1.InjectModel)(category_schema_1.Category.name)),
     __metadata("design:paramtypes", [mongoose_2.Model])
 ], CategoriesService);
+function slugify(title) {
+    return title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+        .slice(0, 80);
+}
 //# sourceMappingURL=categories.service.js.map

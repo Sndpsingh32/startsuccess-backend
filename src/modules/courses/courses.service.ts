@@ -31,6 +31,11 @@ export class CoursesService {
     return this.courseModel.findOne({ slug: slug.toLowerCase(), isPublished: true }).exec();
   }
 
+  /** Slug lookup ignoring publish flag (admin tooling). */
+  async findBySlugAny(slug: string): Promise<Course | null> {
+    return this.courseModel.findOne({ slug: slug.toLowerCase() }).exec();
+  }
+
   async findByUser(userId: string): Promise<Course[]> {
     return this.courseModel
       .find({ uploadedBy: new Types.ObjectId(userId) })

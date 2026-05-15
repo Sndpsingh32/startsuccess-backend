@@ -101,6 +101,17 @@ let UsersService = class UsersService {
     async findById(id) {
         return this.userModel.findById(id).select('-password').exec();
     }
+    async setLockedAffiliateCouponIfUnset(userId, code) {
+        const upper = code?.trim?.()?.toUpperCase?.();
+        if (!upper)
+            return;
+        await this.userModel
+            .updateOne({
+            _id: new mongoose_2.Types.ObjectId(userId),
+            $or: [{ lockedAffiliateCoupon: { $exists: false } }, { lockedAffiliateCoupon: null }, { lockedAffiliateCoupon: '' }],
+        }, { $set: { lockedAffiliateCoupon: upper } })
+            .exec();
+    }
     async updateRefreshTokenHash(userId, hash) {
         if (hash === null) {
             await this.userModel.findByIdAndUpdate(userId, { $unset: { refreshTokenHash: 1 } }).exec();

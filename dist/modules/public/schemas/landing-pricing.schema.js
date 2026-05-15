@@ -25,6 +25,10 @@ const PricingTierSchema = {
     description: { type: String, required: true },
     accent: { type: String, required: true },
 };
+const CompareRowSchema = {
+    label: { type: String, required: true },
+    cells: { type: [String], default: [] },
+};
 let LandingPricing = class LandingPricing {
 };
 exports.LandingPricing = LandingPricing;
@@ -36,6 +40,10 @@ __decorate([
     (0, mongoose_1.Prop)({ type: [PricingTierSchema], default: [] }),
     __metadata("design:type", Array)
 ], LandingPricing.prototype, "tiers", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: [CompareRowSchema], default: [] }),
+    __metadata("design:type", Array)
+], LandingPricing.prototype, "compareRows", void 0);
 exports.LandingPricing = LandingPricing = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true, collection: 'landingPricing' })
 ], LandingPricing);

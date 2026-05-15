@@ -59,6 +59,21 @@ export class UsersService {
     return this.userModel.findById(id).select('-password').exec();
   }
 
+  /** Set once when user first earns attribution (signup ref or first purchase with coupon). */
+  async setLockedAffiliateCouponIfUnset(userId: string, code: string): Promise<void> {
+    const upper = code?.trim?.()?.toUpperCase?.();
+    if (!upper) return;
+    await this.userModel
+      .updateOne(
+        {
+          _id: new Types.ObjectId(userId),
+          $or: [{ lockedAffiliateCoupon: { $exists: false } }, { lockedAffiliateCoupon: null }, { lockedAffiliateCoupon: '' }],
+        },
+        { $set: { lockedAffiliateCoupon: upper } },
+      )
+      .exec();
+  }
+
   async updateRefreshTokenHash(userId: string, hash: string | null) {
     if (hash === null) {
       await this.userModel.findByIdAndUpdate(userId, { $unset: { refreshTokenHash: 1 } }).exec();

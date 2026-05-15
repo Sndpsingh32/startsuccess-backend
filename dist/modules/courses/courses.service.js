@@ -40,6 +40,9 @@ let CoursesService = class CoursesService {
     async findBySlug(slug) {
         return this.courseModel.findOne({ slug: slug.toLowerCase(), isPublished: true }).exec();
     }
+    async findBySlugAny(slug) {
+        return this.courseModel.findOne({ slug: slug.toLowerCase() }).exec();
+    }
     async findByUser(userId) {
         return this.courseModel
             .find({ uploadedBy: new mongoose_2.Types.ObjectId(userId) })

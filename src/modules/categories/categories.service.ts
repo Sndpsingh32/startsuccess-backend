@@ -8,7 +8,11 @@ export class CategoriesService {
   constructor(@InjectModel(Category.name) private model: Model<CategoryDocument>) {}
 
   create(d: Partial<Category>) {
-    return new this.model(d).save();
+    const doc = { ...d } as Partial<Category> & { name?: string; slug?: string };
+    if (!doc.slug && doc.name) {
+      (doc as any).slug = slugify(doc.name);
+    }
+    return new this.model(doc).save();
   }
 
   findAll() {
@@ -26,4 +30,12 @@ export class CategoriesService {
     if (!doc) throw new NotFoundException();
     return { deleted: true };
   }
+}
+
+function slugify(title: string) {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 80);
 }

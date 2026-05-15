@@ -36,6 +36,7 @@ const coupons_module_1 = require("./modules/coupons/coupons.module");
 const reviews_module_1 = require("./modules/reviews/reviews.module");
 const banners_module_1 = require("./modules/banners/banners.module");
 const public_module_1 = require("./modules/public/public.module");
+const kyc_module_1 = require("./modules/kyc/kyc.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -76,6 +77,7 @@ exports.AppModule = AppModule = __decorate([
             reviews_module_1.ReviewsModule,
             banners_module_1.BannersModule,
             public_module_1.PublicModule,
+            kyc_module_1.KycModule,
         ],
         providers: [
             {

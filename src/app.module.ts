@@ -24,6 +24,7 @@ import { CouponsModule } from './modules/coupons/coupons.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { BannersModule } from './modules/banners/banners.module';
 import { PublicModule } from './modules/public/public.module';
+import { KycModule } from './modules/kyc/kyc.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { PublicModule } from './modules/public/public.module';
     ReviewsModule,
     BannersModule,
     PublicModule,
+    KycModule,
   ],
   providers: [
     {

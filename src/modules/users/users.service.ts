@@ -112,14 +112,18 @@ export class UsersService {
       if (d <= 0) return { id, children: [] };
       const children = await this.userModel
         .find({ referredBy: new Types.ObjectId(id) })
-        .select('name email referralCode rank createdAt')
+        .select('name email referralCode rank createdAt avatarUrl')
         .lean();
       const nested = await Promise.all(
-        children.map((c: any) => build(c._id.toString(), d - 1)),
+        children.map(async (c: any) => {
+          const childData = await build(c._id.toString(), d - 1);
+          return { ...c, id: c._id.toString(), children: childData.children };
+        }),
       );
       return { id, children: nested };
     };
-    return build(userId, depth);
+    const result = await build(userId, depth);
+    return { ...root.toObject(), id: userId, children: result.children };
   }
 
   async adminList(query: { page?: number; limit?: number; search?: string }) {

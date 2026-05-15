@@ -30,7 +30,7 @@ export class Course {
   @Prop()
   shortDescription: string;
 
-  /** Rich HTML from admin (e.g. CKEditor); exposed publicly as `bodyHtml` on course detail. */
+  /** Full description for the course detail page. */
   @Prop()
   fullDescription: string;
 

@@ -33,8 +33,12 @@ async function bootstrap() {
   const uploadDirName = config.get<string>('media.uploadDir') || 'uploads';
   const uploadRoot = join(process.cwd(), uploadDirName);
   const videosDir = join(uploadRoot, 'videos');
+  const kycDir = join(uploadRoot, 'kyc');
   if (!existsSync(videosDir)) {
     mkdirSync(videosDir, { recursive: true });
+  }
+  if (!existsSync(kycDir)) {
+    mkdirSync(kycDir, { recursive: true });
   }
   app.useStaticAssets(uploadRoot, { prefix: '/uploads/' });
 

@@ -31,8 +31,12 @@ async function bootstrap() {
     const uploadDirName = config.get('media.uploadDir') || 'uploads';
     const uploadRoot = (0, node_path_1.join)(process.cwd(), uploadDirName);
     const videosDir = (0, node_path_1.join)(uploadRoot, 'videos');
+    const kycDir = (0, node_path_1.join)(uploadRoot, 'kyc');
     if (!(0, node_fs_1.existsSync)(videosDir)) {
         (0, node_fs_1.mkdirSync)(videosDir, { recursive: true });
+    }
+    if (!(0, node_fs_1.existsSync)(kycDir)) {
+        (0, node_fs_1.mkdirSync)(kycDir, { recursive: true });
     }
     app.useStaticAssets(uploadRoot, { prefix: '/uploads/' });
     app.useGlobalPipes(new common_1.ValidationPipe({

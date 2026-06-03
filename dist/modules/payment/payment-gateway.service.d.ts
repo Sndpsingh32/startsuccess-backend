@@ -6,7 +6,11 @@ export declare class PaymentGatewayService {
     private paymentModel;
     private readonly logger;
     constructor(config: ConfigService, paymentModel: Model<PaymentDocument>);
-    createStripeLikeOrder(payerUserId: string, courseId: string, amount: number, couponCode?: string): Promise<{
+    createStripeLikeOrder(payerUserId: string, amount: number, opts: {
+        courseId?: string;
+        planId?: string;
+        couponCode?: string;
+    }): Promise<{
         payment: import("mongoose").Document<unknown, {}, PaymentDocument, {}, {}> & Payment & import("mongoose").Document<Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
             _id: Types.ObjectId;
         }> & {
@@ -15,7 +19,11 @@ export declare class PaymentGatewayService {
         clientSecret: string;
         message: string;
     }>;
-    createRazorpayLikeOrder(payerUserId: string, courseId: string, amount: number, couponCode?: string): Promise<{
+    createRazorpayLikeOrder(payerUserId: string, amount: number, opts: {
+        courseId?: string;
+        planId?: string;
+        couponCode?: string;
+    }): Promise<{
         payment: import("mongoose").Document<unknown, {}, PaymentDocument, {}, {}> & Payment & import("mongoose").Document<Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
             _id: Types.ObjectId;
         }> & {

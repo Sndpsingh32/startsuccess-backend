@@ -32,6 +32,11 @@ export class AuthService {
 
   async login(user: any) {
     if (user.isBanned) throw new UnauthorizedException('Account suspended');
+    if (user.accountActive === false) {
+      throw new UnauthorizedException(
+        'Account is not active yet. Complete payment or contact support.',
+      );
+    }
     const accessSecret = this.configService.get<string>('jwt.accessSecret');
     const refreshSecret = this.configService.get<string>('jwt.refreshSecret');
     const accessExpires = this.configService.get<string>('jwt.accessExpires');

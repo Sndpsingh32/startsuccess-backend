@@ -9,9 +9,38 @@ export declare class UsersService {
     create(user: Partial<User> & {
         password: string;
     }): Promise<UserDocument>;
+    createPlanBuyer(data: {
+        name: string;
+        email: string;
+        password: string;
+        sellerId: string;
+        planId: string;
+        age: number;
+        dateOfBirth: Date;
+        phone: string;
+    }): Promise<UserDocument>;
+    activateAccount(userId: string, newPassword: string): Promise<UserDocument | null>;
     findByEmail(email: string, withPassword?: boolean): Promise<UserDocument | null>;
     findByReferralCode(code: string): Promise<UserDocument | null>;
+    validateReferralCodeForCheckout(code: string, buyerUserId?: string): Promise<{
+        valid: true;
+        code: string;
+        referrerName: string;
+    }>;
+    ensureReferralCode(userId: string): Promise<string>;
     findById(id: string): Promise<UserDocument | null>;
+    updateProfileForSelfPlanPurchase(userId: string, data: {
+        name: string;
+        phone: string;
+        age: number;
+        dateOfBirth: Date;
+        planId: string;
+        accountActive: boolean;
+    }): Promise<import("mongoose").Document<unknown, {}, UserDocument, {}, {}> & User & import("mongoose").Document<Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
+        _id: Types.ObjectId;
+    }> & {
+        __v: number;
+    }>;
     setLockedAffiliateCouponIfUnset(userId: string, code: string): Promise<void>;
     updateRefreshTokenHash(userId: string, hash: string | null): Promise<void>;
     findWithRefreshHash(id: string): Promise<UserDocument | null>;

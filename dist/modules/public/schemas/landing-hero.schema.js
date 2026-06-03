@@ -17,6 +17,8 @@ const SlideSchema = {
     highlight: { type: String, required: true },
     suffix: { type: String, required: true },
     description: { type: String, required: true },
+    imageUrl: { type: String },
+    videoUrl: { type: String },
 };
 const VisualMetaSchema = {
     chip: { type: String, required: true },

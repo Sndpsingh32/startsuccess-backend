@@ -14,6 +14,9 @@ export declare class User {
     passwordResetToken: string;
     passwordResetExpires: Date;
     refreshTokenHash: string;
+    accountActive: boolean;
+    age: number;
+    dateOfBirth: Date;
     isBanned: boolean;
     isVerifiedSeller: boolean;
     rank: AffiliateRank;

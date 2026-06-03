@@ -11,7 +11,7 @@ export declare class KycController {
     }> & {
         __v: number;
     }>;
-    status(user: any): Promise<(import("mongoose").Document<unknown, {}, import("./schemas/kyc.schema").KycDocument, {}, {}> & import("./schemas/kyc.schema").Kyc & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
+    status(user: any): Promise<(import("mongoose").FlattenMaps<import("./schemas/kyc.schema").KycDocument> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {
         __v: number;

@@ -14,12 +14,17 @@ export class PaymentGatewayService {
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
   ) {}
 
-  async createStripeLikeOrder(payerUserId: string, courseId: string, amount: number, couponCode?: string) {
+  async createStripeLikeOrder(
+    payerUserId: string,
+    amount: number,
+    opts: { courseId?: string; planId?: string; couponCode?: string },
+  ) {
     const secret = this.config.get<string>('stripe.secretKey');
     const doc = await this.paymentModel.create({
       payerUserId: new Types.ObjectId(payerUserId),
-      courseId: new Types.ObjectId(courseId),
-      couponCode,
+      courseId: opts.courseId ? new Types.ObjectId(opts.courseId) : null,
+      planId: opts.planId ? new Types.ObjectId(opts.planId) : null,
+      couponCode: opts.couponCode,
       amount,
       currency: 'INR',
       provider: 'stripe',
@@ -35,12 +40,17 @@ export class PaymentGatewayService {
     };
   }
 
-  async createRazorpayLikeOrder(payerUserId: string, courseId: string, amount: number, couponCode?: string) {
+  async createRazorpayLikeOrder(
+    payerUserId: string,
+    amount: number,
+    opts: { courseId?: string; planId?: string; couponCode?: string },
+  ) {
     const key = this.config.get<string>('razorpay.keyId');
     const doc = await this.paymentModel.create({
       payerUserId: new Types.ObjectId(payerUserId),
-      courseId: new Types.ObjectId(courseId),
-      couponCode,
+      courseId: opts.courseId ? new Types.ObjectId(opts.courseId) : null,
+      planId: opts.planId ? new Types.ObjectId(opts.planId) : null,
+      couponCode: opts.couponCode,
       amount,
       currency: 'INR',
       provider: 'razorpay',

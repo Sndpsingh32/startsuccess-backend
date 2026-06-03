@@ -13,6 +13,7 @@ export type LandingPricingTier = {
     savings: string;
     description: string;
     accent: string;
+    courseIds?: string[];
 };
 export type LandingPricingCompareRow = {
     label: string;

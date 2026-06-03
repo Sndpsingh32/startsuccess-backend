@@ -38,6 +38,33 @@ export class Withdrawal {
 
   @Prop()
   adminNote: string;
+
+  @Prop()
+  paidAt?: Date;
+
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  processedBy?: Types.ObjectId;
+
+  @Prop({ default: 'razorpayx' })
+  payoutProvider?: string;
+
+  @Prop()
+  razorpayContactId?: string;
+
+  @Prop()
+  razorpayFundAccountId?: string;
+
+  @Prop()
+  razorpayPayoutId?: string;
+
+  @Prop()
+  payoutProviderStatus?: string;
+
+  @Prop()
+  payoutError?: string;
+
+  @Prop()
+  payoutInitiatedAt?: Date;
 }
 
 export const WithdrawalSchema = SchemaFactory.createForClass(Withdrawal);

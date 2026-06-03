@@ -1,7 +1,8 @@
 import { Document, Types } from 'mongoose';
 export type CommissionDocument = Commission & Document;
 export declare class Commission {
-    purchaseId: Types.ObjectId;
+    purchaseId: Types.ObjectId | null;
+    planSaleId: Types.ObjectId | null;
     beneficiaryUserId: Types.ObjectId | null;
     beneficiaryRole: 'coupon_owner' | 'direct_parent' | 'platform';
     incomeCategory: 'active' | 'passive' | 'platform';

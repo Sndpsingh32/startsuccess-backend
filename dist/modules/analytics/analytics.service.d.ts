@@ -17,4 +17,25 @@ export declare class AnalyticsService {
         monthlyIncome: any;
         totalCourseSales: number;
     }>;
+    private periodStart;
+    leaderboard(period: 'daily' | 'weekly' | 'monthly' | 'overall', limit?: number): Promise<{
+        rank: number;
+        userId: any;
+        name: any;
+        email: any;
+        avatarUrl: any;
+        activeIncome: any;
+        passiveIncome: any;
+        totalEarnings: any;
+    }[]>;
+    incomeUsersList(query: {
+        page?: number;
+        limit?: number;
+        search?: string;
+    }): Promise<{
+        items: any[];
+        total: number;
+        page: number;
+        limit: number;
+    }>;
 }

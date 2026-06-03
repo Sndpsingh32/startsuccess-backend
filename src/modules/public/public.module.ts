@@ -7,6 +7,8 @@ import { Category, CategorySchema } from '../categories/category.schema';
 import { PublicService } from './public.service';
 import { PublicController, LandingAdminController } from './public.controller';
 import { AuthModule } from '../auth/auth.module';
+import { PlansModule } from '../plans/plans.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { AuthModule } from '../auth/auth.module';
       { name: Category.name, schema: CategorySchema },
     ]),
     AuthModule,
+    PlansModule,
+    UsersModule,
   ],
   controllers: [PublicController, LandingAdminController],
   providers: [PublicService],

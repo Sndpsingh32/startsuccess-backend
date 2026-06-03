@@ -32,6 +32,10 @@ __decorate([
     __metadata("design:type", Number)
 ], PlatformSettings.prototype, "directParentPercent", void 0);
 __decorate([
+    (0, mongoose_1.Prop)({ default: app_constants_1.DEFAULT_MEMBER_PROMO_BUYER_DISCOUNT_PCT }),
+    __metadata("design:type", Number)
+], PlatformSettings.prototype, "memberPromoBuyerDiscountPercent", void 0);
+__decorate([
     (0, mongoose_1.Prop)({ default: true }),
     __metadata("design:type", Boolean)
 ], PlatformSettings.prototype, "fraudBlockSelfReferral", void 0);

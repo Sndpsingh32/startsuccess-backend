@@ -16,6 +16,8 @@ const category_schema_1 = require("../categories/category.schema");
 const public_service_1 = require("./public.service");
 const public_controller_1 = require("./public.controller");
 const auth_module_1 = require("../auth/auth.module");
+const plans_module_1 = require("../plans/plans.module");
+const users_module_1 = require("../users/users.module");
 let PublicModule = class PublicModule {
 };
 exports.PublicModule = PublicModule;
@@ -29,6 +31,8 @@ exports.PublicModule = PublicModule = __decorate([
                 { name: category_schema_1.Category.name, schema: category_schema_1.CategorySchema },
             ]),
             auth_module_1.AuthModule,
+            plans_module_1.PlansModule,
+            users_module_1.UsersModule,
         ],
         controllers: [public_controller_1.PublicController, public_controller_1.LandingAdminController],
         providers: [public_service_1.PublicService],

@@ -24,14 +24,18 @@ const analytics_service_1 = require("../analytics/analytics.service");
 const courses_service_1 = require("../courses/courses.service");
 const app_constants_1 = require("../../common/constants/app.constants");
 const course_mapper_1 = require("../public/course-mapper");
+const plans_service_1 = require("../plans/plans.service");
+const kyc_service_1 = require("../kyc/kyc.service");
 let UsersController = class UsersController {
-    constructor(usersService, purchasesService, coursesService, config, walletService, analyticsService) {
+    constructor(usersService, purchasesService, coursesService, config, walletService, analyticsService, plansService, kycService) {
         this.usersService = usersService;
         this.purchasesService = purchasesService;
         this.coursesService = coursesService;
         this.config = config;
         this.walletService = walletService;
         this.analyticsService = analyticsService;
+        this.plansService = plansService;
+        this.kycService = kycService;
     }
     async getCourseCurriculum(req, slug) {
         const isAdmin = req.user.role === app_constants_1.UserRole.ADMIN;
@@ -47,9 +51,9 @@ let UsersController = class UsersController {
         const userId = req.user._id.toString();
         const courseOid = course._id;
         if (!isAdmin) {
-            const ok = await this.purchasesService.hasCompletedCourseAccess(userId, courseOid);
+            const ok = await this.purchasesService.hasCourseAccess(userId, courseOid);
             if (!ok) {
-                throw new common_1.ForbiddenException('Complete enrollment to unlock all lesson videos');
+                throw new common_1.ForbiddenException('Enroll in this course or activate a plan that includes it to unlock all lesson videos');
             }
         }
         const mediaBase = this.config.get('media.publicBase') || '';
@@ -64,19 +68,43 @@ let UsersController = class UsersController {
         const user = await this.usersService.findById(userId);
         if (!user)
             return { error: 'User not found' };
-        const [referrals, myPurchases, affiliateSales, wallet, summary] = await Promise.all([
+        const [referrals, myPurchases, affiliateSales, wallet, summary, kycStatus] = await Promise.all([
             this.usersService.getReferrals(userId),
             this.purchasesService.findByUser(userId),
             user.referralCode ? this.purchasesService.findByCoupon(user.referralCode) : Promise.resolve([]),
             this.walletService.getOrCreate(userId),
             this.analyticsService.dashboardSummary(userId),
+            this.kycService.getStatus(userId),
         ]);
         const conversionRate = referrals.length > 0 ? Math.min(100, (affiliateSales.length / referrals.length) * 100) : 0;
+        const mediaBase = this.config.get('media.publicBase') || '';
+        let planCourses = [];
+        let planName = null;
+        let activeMembership = null;
+        if (user.accountActive && user.planId) {
+            const planOid = user.planId;
+            const plan = await this.plansService.findById(planOid.toString());
+            planName = plan?.name ?? null;
+            const courses = await this.plansService.findPublishedCoursesForMembership(planOid);
+            planCourses = courses.map((c) => (0, course_mapper_1.mapCourseToExplorerDto)(c, 'General', mediaBase));
+            if (plan) {
+                activeMembership = {
+                    planId: plan._id.toString(),
+                    planName: plan.name,
+                    tierId: plan.tierId,
+                    courseCount: courses.length,
+                };
+            }
+        }
         return {
             user,
+            kycStatus: kycStatus?.status ?? 'NOT_SUBMITTED',
+            activeMembership,
             referrals: referrals.length,
             referralList: referrals,
             myPurchases,
+            planCourses,
+            planName,
             affiliateSales,
             wallet,
             conversionRate: Math.round(conversionRate * 100) / 100,
@@ -116,6 +144,8 @@ exports.UsersController = UsersController = __decorate([
         courses_service_1.CoursesService,
         config_1.ConfigService,
         wallet_service_1.WalletService,
-        analytics_service_1.AnalyticsService])
+        analytics_service_1.AnalyticsService,
+        plans_service_1.PlansService,
+        kyc_service_1.KycService])
 ], UsersController);
 //# sourceMappingURL=users.controller.js.map

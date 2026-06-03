@@ -20,6 +20,24 @@ export class ReviewsService {
     return this.model.find({ courseId: new Types.ObjectId(courseId) }).sort({ createdAt: -1 }).lean();
   }
 
+  async listAll(query: { page?: number; limit?: number; courseId?: string }) {
+    const { page = 1, limit = 20, courseId } = query;
+    const filter: any = {};
+    if (courseId) filter.courseId = new Types.ObjectId(courseId);
+    const [items, total] = await Promise.all([
+      this.model
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .populate('userId', 'name email avatarUrl')
+        .populate('courseId', 'title slug')
+        .lean(),
+      this.model.countDocuments(filter),
+    ]);
+    return { items, total, page, limit };
+  }
+
   async remove(id: string) {
     const d = await this.model.findByIdAndDelete(id).exec();
     if (!d) throw new NotFoundException();

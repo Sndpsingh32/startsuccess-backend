@@ -20,6 +20,12 @@ export default () => ({
     keyId: process.env.RAZORPAY_KEY_ID || '',
     keySecret: process.env.RAZORPAY_KEY_SECRET || '',
     webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || '',
+    /** RazorpayX account number (Dashboard → RazorpayX → My Account) */
+    xAccountNumber: process.env.RAZORPAY_X_ACCOUNT_NUMBER || '',
+    /** IMPS (fast) or NEFT */
+    payoutMode: (process.env.RAZORPAY_PAYOUT_MODE || 'IMPS').toUpperCase() as 'IMPS' | 'NEFT' | 'RTGS',
+    /** When true and keys missing, simulate successful bank payout locally */
+    payoutMock: process.env.RAZORPAY_PAYOUT_MOCK !== 'false',
   },
   cors: {
     origin:
@@ -36,5 +42,9 @@ export default () => ({
   },
   platform: {
     userId: process.env.PLATFORM_WALLET_USER_ID || '000000000000000000000000',
+  },
+  mail: {
+    webhookUrl: process.env.MAIL_WEBHOOK_URL || '',
+    from: process.env.MAIL_FROM || 'StartSuccess <noreply@startsuccess.local>',
   },
 });

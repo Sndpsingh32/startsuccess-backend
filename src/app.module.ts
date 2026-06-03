@@ -25,9 +25,12 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { BannersModule } from './modules/banners/banners.module';
 import { PublicModule } from './modules/public/public.module';
 import { KycModule } from './modules/kyc/kyc.module';
+import { MailModule } from './modules/mail/mail.module';
+import { PlanSalesModule } from './modules/plan-sales/plan-sales.module';
 
 @Module({
   imports: [
+    MailModule,
     ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
     ThrottlerModule.forRoot([
       {
@@ -63,6 +66,7 @@ import { KycModule } from './modules/kyc/kyc.module';
     BannersModule,
     PublicModule,
     KycModule,
+    PlanSalesModule,
   ],
   providers: [
     {

@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.NotificationType = exports.WalletTransactionType = exports.PaymentStatus = exports.WithdrawalStatus = exports.AffiliateRank = exports.UserRole = exports.DEFAULT_DIRECT_PARENT_PCT = exports.DEFAULT_PLATFORM_PCT = exports.DEFAULT_COUPON_OWNER_PCT = void 0;
+exports.NotificationType = exports.WalletTransactionType = exports.PaymentStatus = exports.PayoutProviderStatus = exports.WithdrawalStatus = exports.AffiliateRank = exports.UserRole = exports.DEFAULT_MEMBER_PROMO_BUYER_DISCOUNT_PCT = exports.DEFAULT_DIRECT_PARENT_PCT = exports.DEFAULT_PLATFORM_PCT = exports.DEFAULT_COUPON_OWNER_PCT = void 0;
 exports.DEFAULT_COUPON_OWNER_PCT = 70;
 exports.DEFAULT_PLATFORM_PCT = 20;
 exports.DEFAULT_DIRECT_PARENT_PCT = 10;
+exports.DEFAULT_MEMBER_PROMO_BUYER_DISCOUNT_PCT = 40;
 var UserRole;
 (function (UserRole) {
     UserRole["USER"] = "user";
@@ -19,10 +20,20 @@ var AffiliateRank;
 var WithdrawalStatus;
 (function (WithdrawalStatus) {
     WithdrawalStatus["PENDING"] = "pending";
+    WithdrawalStatus["PROCESSING"] = "processing";
     WithdrawalStatus["APPROVED"] = "approved";
     WithdrawalStatus["REJECTED"] = "rejected";
     WithdrawalStatus["PAID"] = "paid";
 })(WithdrawalStatus || (exports.WithdrawalStatus = WithdrawalStatus = {}));
+var PayoutProviderStatus;
+(function (PayoutProviderStatus) {
+    PayoutProviderStatus["QUEUED"] = "queued";
+    PayoutProviderStatus["PENDING"] = "pending";
+    PayoutProviderStatus["PROCESSING"] = "processing";
+    PayoutProviderStatus["PROCESSED"] = "processed";
+    PayoutProviderStatus["FAILED"] = "failed";
+    PayoutProviderStatus["REVERSED"] = "reversed";
+})(PayoutProviderStatus || (exports.PayoutProviderStatus = PayoutProviderStatus = {}));
 var PaymentStatus;
 (function (PaymentStatus) {
     PaymentStatus["PENDING"] = "pending";
@@ -47,6 +58,8 @@ var NotificationType;
     NotificationType["NEW_REFERRAL"] = "new_referral";
     NotificationType["NEW_SALE"] = "new_sale";
     NotificationType["WITHDRAWAL_APPROVED"] = "withdrawal_approved";
+    NotificationType["WITHDRAWAL_REJECTED"] = "withdrawal_rejected";
+    NotificationType["WITHDRAWAL_REQUESTED"] = "withdrawal_requested";
     NotificationType["COURSE_PURCHASED"] = "course_purchased";
     NotificationType["COUPON_USED"] = "coupon_used";
     NotificationType["SYSTEM"] = "system";

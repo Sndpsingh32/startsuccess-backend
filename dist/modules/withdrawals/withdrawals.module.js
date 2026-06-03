@@ -13,14 +13,24 @@ const withdrawal_schema_1 = require("./withdrawal.schema");
 const withdrawals_service_1 = require("./withdrawals.service");
 const withdrawals_controller_1 = require("./withdrawals.controller");
 const wallet_module_1 = require("../wallet/wallet.module");
+const user_schema_1 = require("../users/user.schema");
+const kyc_module_1 = require("../kyc/kyc.module");
+const notifications_module_1 = require("../notifications/notifications.module");
+const payout_module_1 = require("../payout/payout.module");
 let WithdrawalsModule = class WithdrawalsModule {
 };
 exports.WithdrawalsModule = WithdrawalsModule;
 exports.WithdrawalsModule = WithdrawalsModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            mongoose_1.MongooseModule.forFeature([{ name: withdrawal_schema_1.Withdrawal.name, schema: withdrawal_schema_1.WithdrawalSchema }]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: withdrawal_schema_1.Withdrawal.name, schema: withdrawal_schema_1.WithdrawalSchema },
+                { name: user_schema_1.User.name, schema: user_schema_1.UserSchema },
+            ]),
             wallet_module_1.WalletModule,
+            kyc_module_1.KycModule,
+            notifications_module_1.NotificationsModule,
+            payout_module_1.PayoutModule,
         ],
         providers: [withdrawals_service_1.WithdrawalsService],
         controllers: [withdrawals_controller_1.WithdrawalsController],

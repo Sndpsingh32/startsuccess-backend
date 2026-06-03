@@ -24,6 +24,7 @@ const PricingTierSchema = {
     savings: { type: String, required: true },
     description: { type: String, required: true },
     accent: { type: String, required: true },
+    courseIds: { type: [String], default: [] },
 };
 const CompareRowSchema = {
     label: { type: String, required: true },

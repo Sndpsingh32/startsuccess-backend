@@ -12,12 +12,16 @@ const mongoose_1 = require("@nestjs/mongoose");
 const payment_schema_1 = require("./schemas/payment.schema");
 const payment_gateway_service_1 = require("./payment-gateway.service");
 const payments_controller_1 = require("./payments.controller");
+const plan_sales_module_1 = require("../plan-sales/plan-sales.module");
 let PaymentModule = class PaymentModule {
 };
 exports.PaymentModule = PaymentModule;
 exports.PaymentModule = PaymentModule = __decorate([
     (0, common_1.Module)({
-        imports: [mongoose_1.MongooseModule.forFeature([{ name: payment_schema_1.Payment.name, schema: payment_schema_1.PaymentSchema }])],
+        imports: [
+            mongoose_1.MongooseModule.forFeature([{ name: payment_schema_1.Payment.name, schema: payment_schema_1.PaymentSchema }]),
+            (0, common_1.forwardRef)(() => plan_sales_module_1.PlanSalesModule),
+        ],
         providers: [payment_gateway_service_1.PaymentGatewayService],
         controllers: [payments_controller_1.PaymentsController],
         exports: [payment_gateway_service_1.PaymentGatewayService],

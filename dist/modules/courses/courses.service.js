@@ -37,6 +37,14 @@ let CoursesService = class CoursesService {
     async findById(id) {
         return this.courseModel.findById(id).exec();
     }
+    async findPublishedByIds(ids) {
+        if (!ids.length)
+            return [];
+        return this.courseModel
+            .find({ _id: { $in: ids }, isPublished: true })
+            .sort({ createdAt: -1 })
+            .exec();
+    }
     async findBySlug(slug) {
         return this.courseModel.findOne({ slug: slug.toLowerCase(), isPublished: true }).exec();
     }

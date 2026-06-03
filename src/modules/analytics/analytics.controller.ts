@@ -47,4 +47,31 @@ export class AnalyticsController {
     ]);
     return { platformRevenueTotal: agg[0]?.total || 0 };
   }
+
+  @Get('leaderboard')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  leaderboard(@Query('period') period?: 'daily' | 'weekly' | 'monthly' | 'overall') {
+    const p = period || 'monthly';
+    if (!['daily', 'weekly', 'monthly', 'overall'].includes(p)) {
+      return this.analytics.leaderboard('monthly');
+    }
+    return this.analytics.leaderboard(p);
+  }
+
+  @Get('income/users')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  incomeUsers(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('search') search?: string,
+  ) {
+    return this.analytics.incomeUsersList({
+      page: parseInt(page || '1', 10),
+      limit: parseInt(limit || '50', 10),
+      search,
+    });
+  }
 }

@@ -28,6 +28,8 @@ import { CoursesService } from '../courses/courses.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Commission, CommissionDocument } from '../commission/schemas/commission.schema';
+import { Kyc, KycDocument } from '../kyc/schemas/kyc.schema';
+import { Withdrawal, WithdrawalDocument } from '../withdrawals/withdrawal.schema';
 
 const MAX_VIDEO_UPLOAD_BYTES = Math.min(
   2048 * 1024 * 1024,
@@ -52,6 +54,21 @@ function courseVideoDiskStorage() {
   });
 }
 
+function generalMediaDiskStorage() {
+  const uploadDir = process.env.MEDIA_UPLOAD_DIR || 'uploads';
+  const dir = join(process.cwd(), uploadDir, 'media');
+  return diskStorage({
+    destination: (_req, _file, cb) => {
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename: (_req, file, cb) => {
+      const ext = (file.originalname?.match(/\.[a-z0-9]+$/i)?.[0] || '').toLowerCase();
+      cb(null, `${randomUUID()}${ext}`);
+    },
+  });
+}
+
 @ApiTags('admin')
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -63,22 +80,28 @@ export class AdminController {
     private coursesService: CoursesService,
     private readonly config: ConfigService,
     @InjectModel(Commission.name) private commissionModel: Model<CommissionDocument>,
+    @InjectModel(Kyc.name) private kycModel: Model<KycDocument>,
+    @InjectModel(Withdrawal.name) private withdrawalModel: Model<WithdrawalDocument>,
   ) {}
 
   @Get('stats')
   async stats() {
-    const [users, courses, revenue] = await Promise.all([
+    const [users, courses, revenue, pendingKyc, pendingWithdrawals] = await Promise.all([
       this.users.countTotal(),
       this.coursesService.findAllAdmin().then((r) => r.length),
       this.commissionModel.aggregate([
         { $match: { incomeCategory: 'platform' } },
         { $group: { _id: null, t: { $sum: '$amount' } } },
       ]),
+      this.kycModel.countDocuments({ status: 'PENDING' }),
+      this.withdrawalModel.countDocuments({ status: 'PENDING' }),
     ]);
     return {
       totalUsers: users,
       totalCourses: courses,
       platformRevenue: revenue[0]?.t || 0,
+      pendingKyc,
+      pendingWithdrawals,
     };
   }
 
@@ -152,6 +175,46 @@ export class AdminController {
     }
     const name = basename(file.path);
     const relativePath = `/uploads/videos/${name}`;
+    const configuredBase = (this.config.get<string>('media.publicBase') || '').replace(/\/$/, '');
+    const inferred = `${req.protocol}://${req.get('host') || 'localhost'}`;
+    const origin = configuredBase || inferred;
+    const url = `${origin.replace(/\/$/, '')}${relativePath}`;
+    return { path: relativePath, url, filename: name, size: file.size };
+  }
+
+  @Post('media/upload')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+      required: ['file'],
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: generalMediaDiskStorage(),
+      limits: { fileSize: MAX_VIDEO_UPLOAD_BYTES },
+    }),
+  )
+  async uploadMedia(
+    @UploadedFile()
+    file:
+      | {
+          path: string;
+          filename: string;
+          originalname: string;
+          mimetype: string;
+          size: number;
+        }
+      | undefined,
+    @Req() req: Request,
+  ) {
+    if (!file?.path) {
+      throw new BadRequestException('Missing file field "file"');
+    }
+    const name = basename(file.path);
+    const relativePath = `/uploads/media/${name}`;
     const configuredBase = (this.config.get<string>('media.publicBase') || '').replace(/\/$/, '');
     const inferred = `${req.protocol}://${req.get('host') || 'localhost'}`;
     const origin = configuredBase || inferred;

@@ -32,11 +32,15 @@ async function bootstrap() {
     const uploadRoot = (0, node_path_1.join)(process.cwd(), uploadDirName);
     const videosDir = (0, node_path_1.join)(uploadRoot, 'videos');
     const kycDir = (0, node_path_1.join)(uploadRoot, 'kyc');
+    const mediaDir = (0, node_path_1.join)(uploadRoot, 'media');
     if (!(0, node_fs_1.existsSync)(videosDir)) {
         (0, node_fs_1.mkdirSync)(videosDir, { recursive: true });
     }
     if (!(0, node_fs_1.existsSync)(kycDir)) {
         (0, node_fs_1.mkdirSync)(kycDir, { recursive: true });
+    }
+    if (!(0, node_fs_1.existsSync)(mediaDir)) {
+        (0, node_fs_1.mkdirSync)(mediaDir, { recursive: true });
     }
     app.useStaticAssets(uploadRoot, { prefix: '/uploads/' });
     app.useGlobalPipes(new common_1.ValidationPipe({
@@ -53,7 +57,7 @@ async function bootstrap() {
         .build();
     const document = swagger_1.SwaggerModule.createDocument(app, swaggerConfig);
     swagger_1.SwaggerModule.setup('api/docs', app, document);
-    const port = config.get('port') || 3000;
+    const port = process.env.PORT || 3000;
     await app.listen(port);
     console.log(`API http://localhost:${port}  Swagger /api/docs`);
 }

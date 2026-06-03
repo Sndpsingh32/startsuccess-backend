@@ -78,6 +78,11 @@ let UsersService = class UsersService {
             referralCode,
             role: app_constants_1.UserRole.USER,
             referredBy: user.referredBy ? new mongoose_2.Types.ObjectId(user.referredBy) : null,
+            accountActive: user.accountActive !== undefined ? user.accountActive : true,
+            age: user.age,
+            dateOfBirth: user.dateOfBirth,
+            phone: user.phone,
+            planId: user.planId ? new mongoose_2.Types.ObjectId(user.planId) : null,
         };
         const created = new this.userModel(payload);
         const saved = await created.save();
@@ -89,6 +94,25 @@ let UsersService = class UsersService {
         await this.walletService.getOrCreate(saved._id.toString());
         return saved;
     }
+    async createPlanBuyer(data) {
+        return this.create({
+            name: data.name,
+            email: data.email,
+            password: data.password,
+            referredBy: new mongoose_2.Types.ObjectId(data.sellerId),
+            accountActive: false,
+            age: data.age,
+            dateOfBirth: data.dateOfBirth,
+            phone: data.phone,
+            planId: data.planId,
+        });
+    }
+    async activateAccount(userId, newPassword) {
+        const hashed = await bcrypt.hash(newPassword, 10);
+        return this.userModel
+            .findByIdAndUpdate(userId, { accountActive: true, password: hashed }, { new: true })
+            .exec();
+    }
     async findByEmail(email, withPassword = false) {
         const q = this.userModel.findOne({ email: email.toLowerCase() });
         if (withPassword)
@@ -98,8 +122,47 @@ let UsersService = class UsersService {
     async findByReferralCode(code) {
         return this.userModel.findOne({ referralCode: code?.toUpperCase() }).exec();
     }
+    async validateReferralCodeForCheckout(code, buyerUserId) {
+        const upper = code?.trim()?.toUpperCase();
+        if (!upper)
+            throw new common_1.BadRequestException('Enter a referral code');
+        const owner = await this.findByReferralCode(upper);
+        if (!owner) {
+            throw new common_1.BadRequestException('Invalid referral code. Only promo codes assigned to registered members are accepted.');
+        }
+        if (!owner.accountActive) {
+            throw new common_1.BadRequestException('This member referral code is not active yet.');
+        }
+        if (!owner.planId) {
+            throw new common_1.BadRequestException('This referral code is not valid yet. The member must have an active plan.');
+        }
+        if (buyerUserId && owner._id.toString() === buyerUserId) {
+            throw new common_1.BadRequestException('You cannot use your own referral code');
+        }
+        return { valid: true, code: upper, referrerName: owner.name };
+    }
+    async ensureReferralCode(userId) {
+        const user = await this.userModel.findById(userId).select('referralCode').lean();
+        if (user?.referralCode)
+            return user.referralCode;
+        const referralCode = await this.generateUniqueReferralCode();
+        await this.userModel.findByIdAndUpdate(userId, { referralCode }).exec();
+        return referralCode;
+    }
     async findById(id) {
         return this.userModel.findById(id).select('-password').exec();
+    }
+    async updateProfileForSelfPlanPurchase(userId, data) {
+        return this.userModel
+            .findByIdAndUpdate(userId, {
+            name: data.name,
+            phone: data.phone,
+            age: data.age,
+            dateOfBirth: data.dateOfBirth,
+            planId: new mongoose_2.Types.ObjectId(data.planId),
+            accountActive: data.accountActive,
+        }, { new: true })
+            .exec();
     }
     async setLockedAffiliateCouponIfUnset(userId, code) {
         const upper = code?.trim?.()?.toUpperCase?.();

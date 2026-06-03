@@ -7,6 +7,7 @@ export declare class CoursesService {
     findAll(): Promise<Course[]>;
     findAllAdmin(): Promise<Course[]>;
     findById(id: string): Promise<Course | null>;
+    findPublishedByIds(ids: Types.ObjectId[]): Promise<Course[]>;
     findBySlug(slug: string): Promise<Course | null>;
     findBySlugAny(slug: string): Promise<Course | null>;
     findByUser(userId: string): Promise<Course[]>;

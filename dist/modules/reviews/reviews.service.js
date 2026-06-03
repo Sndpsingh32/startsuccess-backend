@@ -32,6 +32,24 @@ let ReviewsService = class ReviewsService {
     listByCourse(courseId) {
         return this.model.find({ courseId: new mongoose_2.Types.ObjectId(courseId) }).sort({ createdAt: -1 }).lean();
     }
+    async listAll(query) {
+        const { page = 1, limit = 20, courseId } = query;
+        const filter = {};
+        if (courseId)
+            filter.courseId = new mongoose_2.Types.ObjectId(courseId);
+        const [items, total] = await Promise.all([
+            this.model
+                .find(filter)
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .populate('userId', 'name email avatarUrl')
+                .populate('courseId', 'title slug')
+                .lean(),
+            this.model.countDocuments(filter),
+        ]);
+        return { items, total, page, limit };
+    }
     async remove(id) {
         const d = await this.model.findByIdAndDelete(id).exec();
         if (!d)

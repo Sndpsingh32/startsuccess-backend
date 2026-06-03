@@ -30,6 +30,7 @@ let SettingsRepository = class SettingsRepository {
                 couponOwnerPercent: app_constants_1.DEFAULT_COUPON_OWNER_PCT,
                 platformPercent: app_constants_1.DEFAULT_PLATFORM_PCT,
                 directParentPercent: app_constants_1.DEFAULT_DIRECT_PARENT_PCT,
+                memberPromoBuyerDiscountPercent: app_constants_1.DEFAULT_MEMBER_PROMO_BUYER_DISCOUNT_PCT,
             });
         }
         return doc;

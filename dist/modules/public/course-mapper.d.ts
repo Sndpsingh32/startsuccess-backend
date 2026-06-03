@@ -9,6 +9,7 @@ export type ExplorerCourseVideoDto = {
 };
 export type ExplorerCourseDto = {
     id: string;
+    courseId: string;
     title: string;
     category: string;
     instructor: string;

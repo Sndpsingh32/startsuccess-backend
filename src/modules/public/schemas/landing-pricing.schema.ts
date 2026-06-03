@@ -17,6 +17,7 @@ const PricingTierSchema = {
   description: { type: String, required: true },
   /** Tailwind gradient classes for cover top wash, e.g. `from-primary/70 via-primary/40 to-transparent` */
   accent: { type: String, required: true },
+  courseIds: { type: [String], default: [] },
 };
 
 export type LandingPricingTier = {
@@ -32,6 +33,8 @@ export type LandingPricingTier = {
   savings: string;
   description: string;
   accent: string;
+  /** MongoDB course ids attached to this plan tier */
+  courseIds?: string[];
 };
 
 /** One row in the /plans compare table; `cells[i]` aligns with `tiers[i]`. */

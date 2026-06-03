@@ -5,6 +5,7 @@ import { PlatformSettings, PlatformSettingsDocument } from './schemas/platform-s
 import {
   DEFAULT_COUPON_OWNER_PCT,
   DEFAULT_DIRECT_PARENT_PCT,
+  DEFAULT_MEMBER_PROMO_BUYER_DISCOUNT_PCT,
   DEFAULT_PLATFORM_PCT,
 } from '../../common/constants/app.constants';
 
@@ -23,6 +24,7 @@ export class SettingsRepository {
         couponOwnerPercent: DEFAULT_COUPON_OWNER_PCT,
         platformPercent: DEFAULT_PLATFORM_PCT,
         directParentPercent: DEFAULT_DIRECT_PARENT_PCT,
+        memberPromoBuyerDiscountPercent: DEFAULT_MEMBER_PROMO_BUYER_DISCOUNT_PCT,
       });
     }
     return doc;

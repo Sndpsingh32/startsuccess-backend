@@ -14,9 +14,43 @@ exports.NotificationsGateway = void 0;
 const websockets_1 = require("@nestjs/websockets");
 const socket_io_1 = require("socket.io");
 const common_1 = require("@nestjs/common");
+const jwt_1 = require("@nestjs/jwt");
+const config_1 = require("@nestjs/config");
 let NotificationsGateway = NotificationsGateway_1 = class NotificationsGateway {
-    constructor() {
+    constructor(jwtService, config) {
+        this.jwtService = jwtService;
+        this.config = config;
         this.logger = new common_1.Logger(NotificationsGateway_1.name);
+    }
+    handleConnection(client) {
+        try {
+            const raw = client.handshake.auth?.token ||
+                client.handshake.query?.token ||
+                '';
+            const token = raw.replace(/^Bearer\s+/i, '').trim();
+            if (!token) {
+                client.disconnect();
+                return;
+            }
+            const secret = this.config.get('jwt.accessSecret');
+            const payload = this.jwtService.verify(token, { secret });
+            const userId = payload.sub;
+            client.join(`user_${userId}`);
+            client.data.userId = userId;
+            if (payload.role === 'admin') {
+                client.join('admin');
+                client.data.role = 'admin';
+            }
+            this.logger.debug(`Socket connected user_${userId}`);
+        }
+        catch {
+            client.disconnect();
+        }
+    }
+    handleDisconnect(client) {
+        const userId = client.data?.userId;
+        if (userId)
+            this.logger.debug(`Socket disconnected user_${userId}`);
     }
     emitToAll(event, payload) {
         if (!this.server)
@@ -28,6 +62,11 @@ let NotificationsGateway = NotificationsGateway_1 = class NotificationsGateway {
             return;
         this.server.to(`user_${userId}`).emit(event, payload);
     }
+    emitToAdmins(event, payload) {
+        if (!this.server)
+            return;
+        this.server.to('admin').emit(event, payload);
+    }
 };
 exports.NotificationsGateway = NotificationsGateway;
 __decorate([
@@ -38,6 +77,8 @@ exports.NotificationsGateway = NotificationsGateway = NotificationsGateway_1 = _
     (0, websockets_1.WebSocketGateway)({
         namespace: '/notifications',
         cors: { origin: '*' },
-    })
+    }),
+    __metadata("design:paramtypes", [jwt_1.JwtService,
+        config_1.ConfigService])
 ], NotificationsGateway);
 //# sourceMappingURL=notifications.gateway.js.map

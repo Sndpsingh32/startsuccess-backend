@@ -14,10 +14,14 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NotificationsController = void 0;
 const common_1 = require("@nestjs/common");
+const rxjs_1 = require("rxjs");
 const swagger_1 = require("@nestjs/swagger");
 const notifications_service_1 = require("./notifications.service");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 const current_user_decorator_1 = require("../../common/decorators/current-user.decorator");
+const roles_guard_1 = require("../../common/guards/roles.guard");
+const roles_decorator_1 = require("../../common/decorators/roles.decorator");
+const app_constants_1 = require("../../common/constants/app.constants");
 let NotificationsController = class NotificationsController {
     constructor(svc) {
         this.svc = svc;
@@ -27,6 +31,15 @@ let NotificationsController = class NotificationsController {
     }
     markRead(user, id) {
         return this.svc.markRead(user._id.toString(), id);
+    }
+    events(token) {
+        return this.svc.subscribeEvents(token || '');
+    }
+    adminEvents(token) {
+        return this.svc.subscribeAdminEvents(token || '');
+    }
+    broadcast(body) {
+        return this.svc.broadcast(body);
     }
 };
 exports.NotificationsController = NotificationsController;
@@ -51,6 +64,30 @@ __decorate([
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], NotificationsController.prototype, "markRead", null);
+__decorate([
+    (0, common_1.Sse)('events'),
+    __param(0, (0, common_1.Query)('token')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", rxjs_1.Observable)
+], NotificationsController.prototype, "events", null);
+__decorate([
+    (0, common_1.Sse)('events/admin'),
+    __param(0, (0, common_1.Query)('token')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", rxjs_1.Observable)
+], NotificationsController.prototype, "adminEvents", null);
+__decorate([
+    (0, common_1.Post)('broadcast'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(app_constants_1.UserRole.ADMIN),
+    (0, swagger_1.ApiBearerAuth)(),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], NotificationsController.prototype, "broadcast", null);
 exports.NotificationsController = NotificationsController = __decorate([
     (0, swagger_1.ApiTags)('notifications'),
     (0, common_1.Controller)('notifications'),

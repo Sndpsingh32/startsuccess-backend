@@ -163,6 +163,7 @@ function mapCourseToExplorerDto(course, categoryName, mediaBase) {
     const bodyHtml = pickBodyHtml(course);
     return {
         id: course.slug,
+        courseId: course._id?.toString?.() ?? course.slug,
         title: course.title,
         category: categoryName || 'General',
         instructor: course.instructorName || 'Expert Instructor',

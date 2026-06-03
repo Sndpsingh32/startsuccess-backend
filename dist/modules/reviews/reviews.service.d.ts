@@ -21,6 +21,20 @@ export declare class ReviewsService {
     }> & {
         __v: number;
     }, {}, ReviewDocument, "find", {}>;
+    listAll(query: {
+        page?: number;
+        limit?: number;
+        courseId?: string;
+    }): Promise<{
+        items: (import("mongoose").FlattenMaps<ReviewDocument> & Required<{
+            _id: Types.ObjectId;
+        }> & {
+            __v: number;
+        })[];
+        total: number;
+        page: number;
+        limit: number;
+    }>;
     remove(id: string): Promise<{
         deleted: boolean;
     }>;

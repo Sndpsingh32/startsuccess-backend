@@ -37,12 +37,15 @@ const reviews_module_1 = require("./modules/reviews/reviews.module");
 const banners_module_1 = require("./modules/banners/banners.module");
 const public_module_1 = require("./modules/public/public.module");
 const kyc_module_1 = require("./modules/kyc/kyc.module");
+const mail_module_1 = require("./modules/mail/mail.module");
+const plan_sales_module_1 = require("./modules/plan-sales/plan-sales.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            mail_module_1.MailModule,
             config_1.ConfigModule.forRoot({ isGlobal: true, load: [configuration_1.default] }),
             throttler_1.ThrottlerModule.forRoot([
                 {
@@ -78,6 +81,7 @@ exports.AppModule = AppModule = __decorate([
             banners_module_1.BannersModule,
             public_module_1.PublicModule,
             kyc_module_1.KycModule,
+            plan_sales_module_1.PlanSalesModule,
         ],
         providers: [
             {

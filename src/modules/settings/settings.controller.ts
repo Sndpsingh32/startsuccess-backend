@@ -18,6 +18,7 @@ export class SettingsController {
       couponOwnerPercent: s.couponOwnerPercent,
       platformPercent: s.platformPercent,
       directParentPercent: s.directParentPercent,
+      memberPromoBuyerDiscountPercent: s.memberPromoBuyerDiscountPercent,
     };
   }
 

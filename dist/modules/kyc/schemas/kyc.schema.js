@@ -69,6 +69,14 @@ __decorate([
     (0, mongoose_1.Prop)(),
     __metadata("design:type", String)
 ], Kyc.prototype, "adminNote", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], Kyc.prototype, "razorpayContactId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], Kyc.prototype, "razorpayFundAccountId", void 0);
 exports.Kyc = Kyc = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], Kyc);

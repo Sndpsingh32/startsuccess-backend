@@ -47,6 +47,12 @@ export class Kyc {
 
   @Prop()
   adminNote: string;
+
+  @Prop()
+  razorpayContactId?: string;
+
+  @Prop()
+  razorpayFundAccountId?: string;
 }
 
 export const KycSchema = SchemaFactory.createForClass(Kyc);

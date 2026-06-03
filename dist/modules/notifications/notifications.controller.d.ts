@@ -1,3 +1,5 @@
+import { Observable } from 'rxjs';
+import { MessageEvent } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 export declare class NotificationsController {
     private readonly svc;
@@ -15,5 +17,14 @@ export declare class NotificationsController {
         _id: import("mongoose").Types.ObjectId;
     }> & {
         __v: number;
+    }>;
+    events(token: string): Observable<MessageEvent>;
+    adminEvents(token: string): Observable<MessageEvent>;
+    broadcast(body: {
+        title: string;
+        body: string;
+        type?: string;
+    }): Promise<{
+        sent: number;
     }>;
 }

@@ -1,16 +1,21 @@
 import { Model, Types } from 'mongoose';
 import { Purchase, PurchaseDocument } from './purchase.schema';
+import { PaymentDocument } from '../payment/schemas/payment.schema';
 import { UsersService } from '../users/users.service';
 import { CoursesService } from '../courses/courses.service';
 import { RevenueDistributionService } from '../commission/revenue-distribution.service';
 import { SettingsService } from '../settings/settings.service';
+import { PlansService } from '../plans/plans.service';
 export declare class PurchasesService {
     private purchaseModel;
+    private paymentModel;
     private usersService;
     private coursesService;
     private revenueDistributionService;
     private settingsService;
-    constructor(purchaseModel: Model<PurchaseDocument>, usersService: UsersService, coursesService: CoursesService, revenueDistributionService: RevenueDistributionService, settingsService: SettingsService);
+    private plansService;
+    constructor(purchaseModel: Model<PurchaseDocument>, paymentModel: Model<PaymentDocument>, usersService: UsersService, coursesService: CoursesService, revenueDistributionService: RevenueDistributionService, settingsService: SettingsService, plansService: PlansService);
+    hasCourseAccess(userId: string, courseOid: Types.ObjectId): Promise<boolean>;
     effectiveCoursePrice(course: any): number;
     create(purchase: Partial<Purchase> & {
         buyerId: string;

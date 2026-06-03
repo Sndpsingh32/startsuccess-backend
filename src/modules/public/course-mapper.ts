@@ -15,6 +15,8 @@ export type ExplorerCourseVideoDto = {
 /** Explorer `Course` shape (matches `edupath-explorer` catalog + detail). */
 export type ExplorerCourseDto = {
   id: string;
+  /** MongoDB course id — use for checkout / purchases */
+  courseId: string;
   title: string;
   category: string;
   instructor: string;
@@ -225,6 +227,7 @@ export function mapCourseToExplorerDto(
 
   return {
     id: course.slug,
+    courseId: (course as any)._id?.toString?.() ?? course.slug,
     title: course.title,
     category: categoryName || 'General',
     instructor: course.instructorName || 'Expert Instructor',

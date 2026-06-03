@@ -22,21 +22,52 @@ let KycService = class KycService {
         this.kycModel = kycModel;
     }
     async submit(userId, data) {
-        const existing = await this.kycModel.findOne({ userId });
+        const uid = new mongoose_2.Types.ObjectId(userId);
+        const existing = await this.kycModel.findOne({ userId: uid });
         if (existing && existing.status === kyc_schema_1.KycStatus.APPROVED) {
             throw new common_1.BadRequestException('KYC already approved');
         }
         if (existing) {
             return this.kycModel.findByIdAndUpdate(existing._id, { ...data, status: kyc_schema_1.KycStatus.PENDING }, { new: true });
         }
-        const created = new this.kycModel({ ...data, userId });
+        const created = new this.kycModel({ ...data, userId: uid });
         return created.save();
     }
     async getStatus(userId) {
-        const kyc = await this.kycModel.findOne({ userId });
+        const kyc = await this.kycModel.findOne({ userId: new mongoose_2.Types.ObjectId(userId) }).lean();
         if (!kyc)
             return { status: 'NOT_SUBMITTED' };
         return kyc;
+    }
+    async isApproved(userId) {
+        const kyc = await this.kycModel
+            .findOne({ userId: new mongoose_2.Types.ObjectId(userId), status: kyc_schema_1.KycStatus.APPROVED })
+            .select('_id')
+            .lean();
+        return Boolean(kyc);
+    }
+    async getApprovedPayoutDetails(userId) {
+        const kyc = await this.kycModel
+            .findOne({ userId: new mongoose_2.Types.ObjectId(userId), status: kyc_schema_1.KycStatus.APPROVED })
+            .lean();
+        if (!kyc) {
+            throw new common_1.BadRequestException('KYC must be approved before you can withdraw');
+        }
+        if (!kyc.bankName || !kyc.accountNumber || !kyc.ifscCode || !kyc.accountHolderName) {
+            throw new common_1.BadRequestException('Complete bank details in KYC before withdrawing');
+        }
+        return {
+            method: 'bank',
+            accountHolderName: kyc.accountHolderName,
+            bankName: kyc.bankName,
+            accountNumber: kyc.accountNumber,
+            ifscCode: kyc.ifscCode,
+            razorpayContactId: kyc.razorpayContactId,
+            razorpayFundAccountId: kyc.razorpayFundAccountId,
+        };
+    }
+    async saveRazorpayIds(userId, contactId, fundAccountId) {
+        await this.kycModel.updateOne({ userId: new mongoose_2.Types.ObjectId(userId) }, { razorpayContactId: contactId, razorpayFundAccountId: fundAccountId });
     }
     async listAll(query) {
         const { status, page = 1, limit = 20 } = query;

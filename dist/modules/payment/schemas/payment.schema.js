@@ -21,9 +21,13 @@ __decorate([
     __metadata("design:type", mongoose_2.Types.ObjectId)
 ], Payment.prototype, "payerUserId", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'Course', required: true }),
+    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'Course', default: null }),
     __metadata("design:type", mongoose_2.Types.ObjectId)
 ], Payment.prototype, "courseId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'Plan', default: null }),
+    __metadata("design:type", mongoose_2.Types.ObjectId)
+], Payment.prototype, "planId", void 0);
 __decorate([
     (0, mongoose_1.Prop)(),
     __metadata("design:type", String)

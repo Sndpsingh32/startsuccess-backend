@@ -120,6 +120,22 @@ __decorate([
     (0, class_validator_1.MaxLength)(200),
     __metadata("design:type", String)
 ], LandingPricingTierDto.prototype, "accent", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({
+        type: [String],
+        description: 'MongoDB course ids included in this plan (full playlist for members)',
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => {
+        if (!Array.isArray(value))
+            return [];
+        return value.map((x) => String(x ?? '').trim()).filter(Boolean);
+    }),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ArrayMaxSize)(500),
+    (0, class_validator_1.IsString)({ each: true }),
+    __metadata("design:type", Array)
+], LandingPricingTierDto.prototype, "courseIds", void 0);
 class LandingPricingCompareRowDto {
 }
 exports.LandingPricingCompareRowDto = LandingPricingCompareRowDto;

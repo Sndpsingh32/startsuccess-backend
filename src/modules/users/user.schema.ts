@@ -47,6 +47,15 @@ export class User {
   @Prop({ select: false })
   refreshTokenHash: string;
 
+  @Prop({ default: true })
+  accountActive: boolean;
+
+  @Prop()
+  age: number;
+
+  @Prop()
+  dateOfBirth: Date;
+
   @Prop({ default: false })
   isBanned: boolean;
 

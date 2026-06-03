@@ -1,4 +1,5 @@
-import { Controller, Get, Param, Patch, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Body, Post, UseGuards } from '@nestjs/common';
+import { UsersService } from '../users/users.service';
 import { ApiBearerAuth, ApiBody, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { PublicService } from './public.service';
@@ -12,7 +13,10 @@ import { PatchLandingPricingDto } from './dto/patch-landing-pricing.dto';
 @Controller('public')
 @SkipThrottle()
 export class PublicController {
-  constructor(private readonly publicService: PublicService) {}
+  constructor(
+    private readonly publicService: PublicService,
+    private readonly usersService: UsersService,
+  ) {}
 
   /** Full homepage hero payload: slides, offers, stat cards, featured courses (explorer shape). */
   @Get('hero')
@@ -35,6 +39,12 @@ export class PublicController {
   @Get('pricing-plans')
   pricingPlans() {
     return this.publicService.getPricingPlansPayload();
+  }
+
+  /** Guest checkout: validate member referral code without login. */
+  @Post('validate-referral')
+  validateReferral(@Body() body: { code: string }) {
+    return this.usersService.validateReferralCodeForCheckout(body.code);
   }
 }
 

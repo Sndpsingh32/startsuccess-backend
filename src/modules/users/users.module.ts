@@ -7,14 +7,18 @@ import { PurchasesModule } from '../purchases/purchases.module';
 import { WalletModule } from '../wallet/wallet.module';
 import { AnalyticsModule } from '../analytics/analytics.module';
 import { CoursesModule } from '../courses/courses.module';
+import { PlansModule } from '../plans/plans.module';
+import { KycModule } from '../kyc/kyc.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     forwardRef(() => PurchasesModule),
     CoursesModule,
+    PlansModule,
     WalletModule,
     AnalyticsModule,
+    KycModule,
   ],
   providers: [UsersService],
   controllers: [UsersController],

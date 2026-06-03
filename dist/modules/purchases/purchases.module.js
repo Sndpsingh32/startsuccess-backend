@@ -16,17 +16,25 @@ const users_module_1 = require("../users/users.module");
 const courses_module_1 = require("../courses/courses.module");
 const commission_module_1 = require("../commission/commission.module");
 const settings_module_1 = require("../settings/settings.module");
+const payment_module_1 = require("../payment/payment.module");
+const plans_module_1 = require("../plans/plans.module");
+const payment_schema_1 = require("../payment/schemas/payment.schema");
 let PurchasesModule = class PurchasesModule {
 };
 exports.PurchasesModule = PurchasesModule;
 exports.PurchasesModule = PurchasesModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            mongoose_1.MongooseModule.forFeature([{ name: purchase_schema_1.Purchase.name, schema: purchase_schema_1.PurchaseSchema }]),
+            mongoose_1.MongooseModule.forFeature([
+                { name: purchase_schema_1.Purchase.name, schema: purchase_schema_1.PurchaseSchema },
+                { name: payment_schema_1.Payment.name, schema: payment_schema_1.PaymentSchema },
+            ]),
             (0, common_1.forwardRef)(() => users_module_1.UsersModule),
             courses_module_1.CoursesModule,
             commission_module_1.CommissionModule,
             settings_module_1.SettingsModule,
+            (0, common_1.forwardRef)(() => payment_module_1.PaymentModule),
+            plans_module_1.PlansModule,
         ],
         controllers: [purchases_controller_1.PurchasesController],
         providers: [purchases_service_1.PurchasesService],

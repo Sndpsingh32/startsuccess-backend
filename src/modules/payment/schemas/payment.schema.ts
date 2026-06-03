@@ -9,8 +9,11 @@ export class Payment {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   payerUserId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Course', required: true })
-  courseId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Course', default: null })
+  courseId: Types.ObjectId | null;
+
+  @Prop({ type: Types.ObjectId, ref: 'Plan', default: null })
+  planId: Types.ObjectId | null;
 
   @Prop()
   couponCode: string;

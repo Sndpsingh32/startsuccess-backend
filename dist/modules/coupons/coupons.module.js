@@ -8,15 +8,25 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CouponsModule = void 0;
 const common_1 = require("@nestjs/common");
+const mongoose_1 = require("@nestjs/mongoose");
 const coupons_controller_1 = require("./coupons.controller");
 const purchases_module_1 = require("../purchases/purchases.module");
+const users_module_1 = require("../users/users.module");
+const promo_coupon_schema_1 = require("./promo-coupon.schema");
+const promo_coupons_service_1 = require("./promo-coupons.service");
 let CouponsModule = class CouponsModule {
 };
 exports.CouponsModule = CouponsModule;
 exports.CouponsModule = CouponsModule = __decorate([
     (0, common_1.Module)({
-        imports: [purchases_module_1.PurchasesModule],
+        imports: [
+            users_module_1.UsersModule,
+            purchases_module_1.PurchasesModule,
+            mongoose_1.MongooseModule.forFeature([{ name: promo_coupon_schema_1.PromoCoupon.name, schema: promo_coupon_schema_1.PromoCouponSchema }]),
+        ],
         controllers: [coupons_controller_1.CouponsController],
+        providers: [promo_coupons_service_1.PromoCouponsService],
+        exports: [promo_coupons_service_1.PromoCouponsService],
     })
 ], CouponsModule);
 //# sourceMappingURL=coupons.module.js.map

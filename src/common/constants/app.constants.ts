@@ -2,6 +2,8 @@
 export const DEFAULT_COUPON_OWNER_PCT = 70;
 export const DEFAULT_PLATFORM_PCT = 20;
 export const DEFAULT_DIRECT_PARENT_PCT = 10;
+/** Buyer discount when checking out with a member's promo / referral code (plan sales). */
+export const DEFAULT_MEMBER_PROMO_BUYER_DISCOUNT_PCT = 40;
 
 export enum UserRole {
   USER = 'user',
@@ -17,9 +19,19 @@ export enum AffiliateRank {
 
 export enum WithdrawalStatus {
   PENDING = 'pending',
+  PROCESSING = 'processing',
   APPROVED = 'approved',
   REJECTED = 'rejected',
   PAID = 'paid',
+}
+
+export enum PayoutProviderStatus {
+  QUEUED = 'queued',
+  PENDING = 'pending',
+  PROCESSING = 'processing',
+  PROCESSED = 'processed',
+  FAILED = 'failed',
+  REVERSED = 'reversed',
 }
 
 export enum PaymentStatus {
@@ -45,6 +57,8 @@ export enum NotificationType {
   NEW_REFERRAL = 'new_referral',
   NEW_SALE = 'new_sale',
   WITHDRAWAL_APPROVED = 'withdrawal_approved',
+  WITHDRAWAL_REJECTED = 'withdrawal_rejected',
+  WITHDRAWAL_REQUESTED = 'withdrawal_requested',
   COURSE_PURCHASED = 'course_purchased',
   COUPON_USED = 'coupon_used',
   SYSTEM = 'system',

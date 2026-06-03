@@ -16,6 +16,16 @@ export declare class ReviewsController {
     }> & {
         __v: number;
     }, {}, import("./review.schema").ReviewDocument, "find", {}>;
+    adminList(page?: string, limit?: string, courseId?: string): Promise<{
+        items: (import("mongoose").FlattenMaps<import("./review.schema").ReviewDocument> & Required<{
+            _id: import("mongoose").Types.ObjectId;
+        }> & {
+            __v: number;
+        })[];
+        total: number;
+        page: number;
+        limit: number;
+    }>;
     remove(id: string): Promise<{
         deleted: boolean;
     }>;

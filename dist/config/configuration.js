@@ -22,6 +22,9 @@ exports.default = () => ({
         keyId: process.env.RAZORPAY_KEY_ID || '',
         keySecret: process.env.RAZORPAY_KEY_SECRET || '',
         webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || '',
+        xAccountNumber: process.env.RAZORPAY_X_ACCOUNT_NUMBER || '',
+        payoutMode: (process.env.RAZORPAY_PAYOUT_MODE || 'IMPS').toUpperCase(),
+        payoutMock: process.env.RAZORPAY_PAYOUT_MOCK !== 'false',
     },
     cors: {
         origin: process.env.CORS_ORIGIN?.split(',') ||
@@ -35,6 +38,10 @@ exports.default = () => ({
     },
     platform: {
         userId: process.env.PLATFORM_WALLET_USER_ID || '000000000000000000000000',
+    },
+    mail: {
+        webhookUrl: process.env.MAIL_WEBHOOK_URL || '',
+        from: process.env.MAIL_FROM || 'StartSuccess <noreply@startsuccess.local>',
     },
 });
 //# sourceMappingURL=configuration.js.map

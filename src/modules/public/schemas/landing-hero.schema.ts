@@ -9,6 +9,8 @@ const SlideSchema = {
   highlight: { type: String, required: true },
   suffix: { type: String, required: true },
   description: { type: String, required: true },
+  imageUrl: { type: String },
+  videoUrl: { type: String },
 };
 
 const VisualMetaSchema = {
@@ -45,6 +47,8 @@ export class LandingHero {
     highlight: string;
     suffix: string;
     description: string;
+    imageUrl?: string;
+    videoUrl?: string;
   }>;
 
   @Prop({ type: [String], default: [] })

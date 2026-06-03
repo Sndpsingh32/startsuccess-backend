@@ -106,6 +106,20 @@ export class LandingPricingTierDto {
   @IsString()
   @MaxLength(200)
   accent: string;
+
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'MongoDB course ids included in this plan (full playlist for members)',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (!Array.isArray(value)) return [];
+    return value.map((x) => String(x ?? '').trim()).filter(Boolean);
+  })
+  @IsArray()
+  @ArrayMaxSize(500)
+  @IsString({ each: true })
+  courseIds?: string[];
 }
 
 /** One row in the /plans compare table; `cells[i]` = value for `tiers[i]`. */

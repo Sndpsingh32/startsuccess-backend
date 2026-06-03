@@ -5,8 +5,11 @@ export type CommissionDocument = Commission & Document;
 
 @Schema({ timestamps: true, collection: 'commissions' })
 export class Commission {
-  @Prop({ type: Types.ObjectId, ref: 'Purchase', required: true })
-  purchaseId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Purchase', default: null })
+  purchaseId: Types.ObjectId | null;
+
+  @Prop({ type: Types.ObjectId, ref: 'PlanSale', default: null })
+  planSaleId: Types.ObjectId | null;
 
   @Prop({ type: Types.ObjectId, ref: 'User', default: null })
   beneficiaryUserId: Types.ObjectId | null;

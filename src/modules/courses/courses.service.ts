@@ -27,6 +27,14 @@ export class CoursesService {
     return this.courseModel.findById(id).exec();
   }
 
+  async findPublishedByIds(ids: Types.ObjectId[]): Promise<Course[]> {
+    if (!ids.length) return [];
+    return this.courseModel
+      .find({ _id: { $in: ids }, isPublished: true })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
   async findBySlug(slug: string): Promise<Course | null> {
     return this.courseModel.findOne({ slug: slug.toLowerCase(), isPublished: true }).exec();
   }

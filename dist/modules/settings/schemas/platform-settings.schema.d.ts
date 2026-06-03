@@ -5,6 +5,7 @@ export declare class PlatformSettings {
     couponOwnerPercent: number;
     platformPercent: number;
     directParentPercent: number;
+    memberPromoBuyerDiscountPercent: number;
     fraudBlockSelfReferral: boolean;
     fraudBlockCouponOwnerPurchase: boolean;
 }

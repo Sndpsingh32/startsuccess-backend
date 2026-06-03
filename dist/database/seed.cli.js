@@ -44,7 +44,45 @@ const course_schema_1 = require("../modules/courses/course.schema");
 const platform_settings_schema_1 = require("../modules/settings/schemas/platform-settings.schema");
 const landing_hero_schema_1 = require("../modules/public/schemas/landing-hero.schema");
 const landing_pricing_schema_1 = require("../modules/public/schemas/landing-pricing.schema");
-const public_service_1 = require("../modules/public/public.service");
+const public_defaults_1 = require("../modules/public/public.defaults");
+const plan_schema_1 = require("../modules/plans/plan.schema");
+const wallet_schema_1 = require("../modules/wallet/schemas/wallet.schema");
+const promo_coupon_schema_1 = require("../modules/coupons/promo-coupon.schema");
+const plans_service_1 = require("../modules/plans/plans.service");
+const DEMO_PASSWORD = 'Demo123!';
+const DUMMY_USERS = [
+    {
+        name: 'Alex Demo Seller',
+        email: 'alex@demo.local',
+        referralCode: 'ALEXDEMO01',
+        planName: 'Pro',
+    },
+    {
+        name: 'Priya Demo Member',
+        email: 'priya@demo.local',
+        referralCode: 'PRIYADEMO2',
+        planName: 'Starter',
+        referredByEmail: 'alex@demo.local',
+    },
+    {
+        name: 'Rohan Demo Member',
+        email: 'rohan@demo.local',
+        referralCode: 'ROHANDEMO3',
+        planName: 'Pro',
+        referredByEmail: 'alex@demo.local',
+    },
+    {
+        name: 'Maya Demo User',
+        email: 'maya@demo.local',
+        referralCode: 'MAYADEMO04',
+    },
+    {
+        name: 'Explorer Test User',
+        email: 'user@edupath.local',
+        referralCode: 'EDUPATH01',
+        planName: 'Starter',
+    },
+];
 const cover = (seed) => `https://images.unsplash.com/photo-${seed}?auto=format&fit=crop&w=1200&q=70`;
 async function run() {
     const app = await core_1.NestFactory.createApplicationContext(app_module_1.AppModule);
@@ -54,12 +92,41 @@ async function run() {
     const settingsModel = app.get((0, mongoose_1.getModelToken)(platform_settings_schema_1.PlatformSettings.name));
     const landingModel = app.get((0, mongoose_1.getModelToken)(landing_hero_schema_1.LandingHero.name));
     const landingPricingModel = app.get((0, mongoose_1.getModelToken)(landing_pricing_schema_1.LandingPricing.name));
-    await settingsModel.updateOne({ key: 'global' }, { $setOnInsert: { key: 'global' } }, { upsert: true });
-    await landingModel.updateOne({ key: 'default' }, { $setOnInsert: { key: 'default', ...public_service_1.DEFAULT_LANDING_HERO } }, { upsert: true });
+    const planModel = app.get((0, mongoose_1.getModelToken)(plan_schema_1.Plan.name));
+    const walletModel = app.get((0, mongoose_1.getModelToken)(wallet_schema_1.Wallet.name));
+    const promoCouponModel = app.get((0, mongoose_1.getModelToken)(promo_coupon_schema_1.PromoCoupon.name));
+    await settingsModel.updateOne({ key: 'global' }, {
+        $set: { memberPromoBuyerDiscountPercent: 40 },
+        $setOnInsert: { key: 'global' },
+    }, { upsert: true });
+    await landingModel.updateOne({ key: 'default' }, { $setOnInsert: { key: 'default', ...public_defaults_1.DEFAULT_LANDING_HERO } }, { upsert: true });
     await landingPricingModel.updateOne({ key: 'default' }, {
-        $set: { tiers: public_service_1.DEFAULT_LANDING_PRICING_TIERS },
+        $set: { tiers: public_defaults_1.DEFAULT_LANDING_PRICING_TIERS },
         $setOnInsert: { key: 'default' },
     }, { upsert: true });
+    const planDefs = [
+        { name: 'Starter', price: 999, features: ['Core courses', 'Community access'] },
+        { name: 'Pro', price: 2999, features: ['All courses', 'Affiliate tools', 'Priority support'] },
+        { name: 'Elite', price: 9999, features: ['Everything in Pro', '1:1 mentorship', 'Highest commissions'] },
+    ];
+    const planByName = {};
+    for (const p of planDefs) {
+        let doc = await planModel.findOne({ name: p.name });
+        if (!doc)
+            doc = await planModel.create(p);
+        planByName[p.name] = doc;
+    }
+    const couponDefs = [
+        { code: 'SAVE10', discountType: 'percentage', discountValue: 10, minPurchase: 0 },
+        { code: 'FLAT200', discountType: 'fixed', discountValue: 200, minPurchase: 500 },
+    ];
+    for (const c of couponDefs) {
+        const exists = await promoCouponModel.findOne({ code: c.code });
+        if (!exists) {
+            await promoCouponModel.create({ ...c, active: true, maxUsage: 0, usedCount: 0 });
+            console.log('Seeded promo coupon', c.code);
+        }
+    }
     const adminEmail = 'admin@edupath.local';
     let admin = await userModel.findOne({ email: adminEmail });
     if (!admin) {
@@ -73,6 +140,55 @@ async function run() {
             emailVerified: true,
         });
         console.log('Created admin:', adminEmail, '/ Admin123!');
+    }
+    const demoHash = await bcrypt.hash(DEMO_PASSWORD, 10);
+    const userByEmail = { [adminEmail]: admin };
+    for (const def of DUMMY_USERS) {
+        const email = def.email.toLowerCase();
+        let doc = await userModel.findOne({ email });
+        const planId = def.planName ? planByName[def.planName]?._id ?? null : null;
+        const referredBy = def.referredByEmail
+            ? userByEmail[def.referredByEmail.toLowerCase()]?._id ?? null
+            : null;
+        if (!doc) {
+            doc = await userModel.create({
+                name: def.name,
+                email,
+                password: demoHash,
+                referralCode: def.referralCode.toUpperCase(),
+                role: def.role ?? app_constants_1.UserRole.USER,
+                emailVerified: true,
+                accountActive: true,
+                planId,
+                referredBy,
+            });
+            if (referredBy) {
+                await userModel.findByIdAndUpdate(referredBy, {
+                    $inc: { totalReferralsCount: 1, directReferralsCount: 1 },
+                });
+            }
+            console.log('Created demo user:', email);
+        }
+        else {
+            await userModel.updateOne({ _id: doc._id }, {
+                $set: {
+                    name: def.name,
+                    password: demoHash,
+                    referralCode: def.referralCode.toUpperCase(),
+                    emailVerified: true,
+                    accountActive: true,
+                    planId,
+                    referredBy,
+                },
+            });
+            doc = (await userModel.findById(doc._id));
+            console.log('Updated demo user:', email);
+        }
+        const walletExists = await walletModel.exists({ userId: doc._id });
+        if (!walletExists) {
+            await walletModel.create({ userId: doc._id, availableBalance: 0, pendingBalance: 0, currency: 'INR' });
+        }
+        userByEmail[email] = doc;
     }
     const categoryDefs = [
         { name: 'Web Development', slug: 'web-development', order: 1 },
@@ -218,10 +334,60 @@ async function run() {
             console.log('Seeded course', sc.slug);
         }
     }
-    console.log('\n--- Admin (admin panel sign-in) ---');
-    console.log('Email:', adminEmail);
-    console.log('Password: Admin123!');
-    console.log('(If this admin already existed before seed, password was not reset — use your saved password or update the user in DB.)');
+    const publishedCourses = await courseModel.find({ isPublished: true }).select('_id slug level').lean();
+    const bySlug = Object.fromEntries(publishedCourses.map((c) => [c.slug, c._id.toString()]));
+    const allCourseIdStrings = publishedCourses.map((c) => c._id.toString());
+    const starterCourseIds = ['ui-design', 'mobile']
+        .map((s) => bySlug[s])
+        .filter(Boolean);
+    const proCourseIds = allCourseIdStrings;
+    const pricingDoc = await landingPricingModel.findOne({ key: 'default' }).lean();
+    const baseTiers = pricingDoc?.tiers?.length ? pricingDoc.tiers : public_defaults_1.DEFAULT_LANDING_PRICING_TIERS;
+    const tiersWithCourses = baseTiers.map((t) => ({
+        ...t,
+        courseIds: t.id === 'starter'
+            ? starterCourseIds.length
+                ? starterCourseIds
+                : allCourseIdStrings.slice(0, 2)
+            : proCourseIds,
+    }));
+    await landingPricingModel.updateOne({ key: 'default' }, { $set: { tiers: tiersWithCourses } }, { upsert: true });
+    const plansService = app.get(plans_service_1.PlansService);
+    await plansService.syncFromLandingPricing();
+    const tierStarter = await planModel.findOne({ tierId: 'starter' });
+    const tierPro = await planModel.findOne({ tierId: 'pro' });
+    for (const def of DUMMY_USERS) {
+        if (!def.planName)
+            continue;
+        const tierPlan = def.planName === 'Starter' ? tierStarter : def.planName === 'Pro' ? tierPro : null;
+        if (tierPlan) {
+            await userModel.updateOne({ email: def.email.toLowerCase() }, { $set: { planId: tierPlan._id, accountActive: true } });
+        }
+    }
+    console.log('\n========== SEED CREDENTIALS ==========\n');
+    console.log('--- Admin (admin panel: http://localhost:5174) ---');
+    console.log('Email:    ', adminEmail);
+    console.log('Password: ', 'Admin123!');
+    console.log('Promo:    ', 'ADMINSEED1 (admin referral code)\n');
+    console.log('--- Demo users (explorer: http://localhost:5173) — password for all: ' + DEMO_PASSWORD + ' ---');
+    for (const def of DUMMY_USERS) {
+        const planNote = def.planName ? `plan: ${def.planName}` : 'no plan (promo not valid at checkout)';
+        const refNote = def.referredByEmail ? `referred by ${def.referredByEmail}` : 'no upline';
+        console.log(`\n${def.name}`);
+        console.log('  Email:    ', def.email);
+        console.log('  Password: ', DEMO_PASSWORD);
+        console.log('  Promo:    ', def.referralCode, `(${planNote}, ${refNote})`);
+    }
+    console.log('\n--- Quick copy (login | promo) ---');
+    for (const def of DUMMY_USERS) {
+        console.log(`${def.email} | ${DEMO_PASSWORD} | ${def.referralCode}`);
+    }
+    console.log('\n--- Discount coupons (buyer price off at Sell Plan) ---');
+    console.log('SAVE10  — 10% off any plan');
+    console.log('FLAT200 — ₹200 off when plan price ≥ ₹500');
+    console.log('\nMember codes (ALEXDEMO01, etc.) = commission only, no buyer discount.');
+    console.log('\nNote: Promo codes with a plan work at checkout. Maya has no plan — login only.\n' +
+        'If admin existed before seed, Admin password was NOT reset.\n');
     await app.close();
 }
 run().catch((e) => {

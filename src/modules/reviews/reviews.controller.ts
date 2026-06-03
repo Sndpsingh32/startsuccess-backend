@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ReviewsService } from './reviews.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -22,6 +22,22 @@ export class ReviewsController {
   @Get('course/:courseId')
   list(@Param('courseId') courseId: string) {
     return this.svc.listByCourse(courseId);
+  }
+
+  @Get('admin/all')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  adminList(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('courseId') courseId?: string,
+  ) {
+    return this.svc.listAll({
+      page: parseInt(page || '1', 10),
+      limit: parseInt(limit || '20', 10),
+      courseId,
+    });
   }
 
   @Delete(':id')

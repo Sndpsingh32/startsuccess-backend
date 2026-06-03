@@ -30,6 +30,8 @@ const courses_service_1 = require("../courses/courses.service");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const commission_schema_1 = require("../commission/schemas/commission.schema");
+const kyc_schema_1 = require("../kyc/schemas/kyc.schema");
+const withdrawal_schema_1 = require("../withdrawals/withdrawal.schema");
 const MAX_VIDEO_UPLOAD_BYTES = Math.min(2048 * 1024 * 1024, Math.max(16 * 1024 * 1024, (parseInt(process.env.MEDIA_MAX_VIDEO_MB || '512', 10) || 512) * 1024 * 1024));
 function courseVideoDiskStorage() {
     const uploadDir = process.env.MEDIA_UPLOAD_DIR || 'uploads';
@@ -49,26 +51,47 @@ function courseVideoDiskStorage() {
         },
     });
 }
+function generalMediaDiskStorage() {
+    const uploadDir = process.env.MEDIA_UPLOAD_DIR || 'uploads';
+    const dir = (0, node_path_1.join)(process.cwd(), uploadDir, 'media');
+    return (0, multer_1.diskStorage)({
+        destination: (_req, _file, cb) => {
+            if (!(0, node_fs_1.existsSync)(dir))
+                (0, node_fs_1.mkdirSync)(dir, { recursive: true });
+            cb(null, dir);
+        },
+        filename: (_req, file, cb) => {
+            const ext = (file.originalname?.match(/\.[a-z0-9]+$/i)?.[0] || '').toLowerCase();
+            cb(null, `${(0, node_crypto_1.randomUUID)()}${ext}`);
+        },
+    });
+}
 let AdminController = class AdminController {
-    constructor(users, coursesService, config, commissionModel) {
+    constructor(users, coursesService, config, commissionModel, kycModel, withdrawalModel) {
         this.users = users;
         this.coursesService = coursesService;
         this.config = config;
         this.commissionModel = commissionModel;
+        this.kycModel = kycModel;
+        this.withdrawalModel = withdrawalModel;
     }
     async stats() {
-        const [users, courses, revenue] = await Promise.all([
+        const [users, courses, revenue, pendingKyc, pendingWithdrawals] = await Promise.all([
             this.users.countTotal(),
             this.coursesService.findAllAdmin().then((r) => r.length),
             this.commissionModel.aggregate([
                 { $match: { incomeCategory: 'platform' } },
                 { $group: { _id: null, t: { $sum: '$amount' } } },
             ]),
+            this.kycModel.countDocuments({ status: 'PENDING' }),
+            this.withdrawalModel.countDocuments({ status: 'PENDING' }),
         ]);
         return {
             totalUsers: users,
             totalCourses: courses,
             platformRevenue: revenue[0]?.t || 0,
+            pendingKyc,
+            pendingWithdrawals,
         };
     }
     listUsers(page, limit, search) {
@@ -96,6 +119,18 @@ let AdminController = class AdminController {
         }
         const name = (0, node_path_1.basename)(file.path);
         const relativePath = `/uploads/videos/${name}`;
+        const configuredBase = (this.config.get('media.publicBase') || '').replace(/\/$/, '');
+        const inferred = `${req.protocol}://${req.get('host') || 'localhost'}`;
+        const origin = configuredBase || inferred;
+        const url = `${origin.replace(/\/$/, '')}${relativePath}`;
+        return { path: relativePath, url, filename: name, size: file.size };
+    }
+    async uploadMedia(file, req) {
+        if (!file?.path) {
+            throw new common_1.BadRequestException('Missing file field "file"');
+        }
+        const name = (0, node_path_1.basename)(file.path);
+        const relativePath = `/uploads/media/${name}`;
         const configuredBase = (this.config.get('media.publicBase') || '').replace(/\/$/, '');
         const inferred = `${req.protocol}://${req.get('host') || 'localhost'}`;
         const origin = configuredBase || inferred;
@@ -175,6 +210,26 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "uploadCourseVideo", null);
+__decorate([
+    (0, common_1.Post)('media/upload'),
+    (0, swagger_1.ApiConsumes)('multipart/form-data'),
+    (0, swagger_1.ApiBody)({
+        schema: {
+            type: 'object',
+            properties: { file: { type: 'string', format: 'binary' } },
+            required: ['file'],
+        },
+    }),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
+        storage: generalMediaDiskStorage(),
+        limits: { fileSize: MAX_VIDEO_UPLOAD_BYTES },
+    })),
+    __param(0, (0, common_1.UploadedFile)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "uploadMedia", null);
 exports.AdminController = AdminController = __decorate([
     (0, swagger_1.ApiTags)('admin'),
     (0, common_1.Controller)('admin'),
@@ -182,9 +237,13 @@ exports.AdminController = AdminController = __decorate([
     (0, roles_decorator_1.Roles)(app_constants_1.UserRole.ADMIN),
     (0, swagger_1.ApiBearerAuth)(),
     __param(3, (0, mongoose_1.InjectModel)(commission_schema_1.Commission.name)),
+    __param(4, (0, mongoose_1.InjectModel)(kyc_schema_1.Kyc.name)),
+    __param(5, (0, mongoose_1.InjectModel)(withdrawal_schema_1.Withdrawal.name)),
     __metadata("design:paramtypes", [users_service_1.UsersService,
         courses_service_1.CoursesService,
         config_1.ConfigService,
+        mongoose_2.Model,
+        mongoose_2.Model,
         mongoose_2.Model])
 ], AdminController);
 //# sourceMappingURL=admin.controller.js.map

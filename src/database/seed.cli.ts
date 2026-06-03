@@ -15,7 +15,57 @@ import { Course, CourseDocument } from '../modules/courses/course.schema';
 import { PlatformSettings, PlatformSettingsDocument } from '../modules/settings/schemas/platform-settings.schema';
 import { LandingHero, LandingHeroDocument } from '../modules/public/schemas/landing-hero.schema';
 import { LandingPricing, LandingPricingDocument } from '../modules/public/schemas/landing-pricing.schema';
-import { DEFAULT_LANDING_HERO, DEFAULT_LANDING_PRICING_TIERS } from '../modules/public/public.service';
+import { DEFAULT_LANDING_HERO, DEFAULT_LANDING_PRICING_TIERS } from '../modules/public/public.defaults';
+import { Plan, PlanDocument } from '../modules/plans/plan.schema';
+import { Wallet, WalletDocument } from '../modules/wallet/schemas/wallet.schema';
+import { PromoCoupon, PromoCouponDocument } from '../modules/coupons/promo-coupon.schema';
+import { PlansService } from '../modules/plans/plans.service';
+
+const DEMO_PASSWORD = 'Demo123!';
+
+type DummyUserDef = {
+  name: string;
+  email: string;
+  referralCode: string;
+  planName?: 'Starter' | 'Pro' | 'Elite';
+  referredByEmail?: string;
+  role?: UserRole;
+};
+
+/** Explorer / affiliate demo accounts — same password for all: Demo123! */
+const DUMMY_USERS: DummyUserDef[] = [
+  {
+    name: 'Alex Demo Seller',
+    email: 'alex@demo.local',
+    referralCode: 'ALEXDEMO01',
+    planName: 'Pro',
+  },
+  {
+    name: 'Priya Demo Member',
+    email: 'priya@demo.local',
+    referralCode: 'PRIYADEMO2',
+    planName: 'Starter',
+    referredByEmail: 'alex@demo.local',
+  },
+  {
+    name: 'Rohan Demo Member',
+    email: 'rohan@demo.local',
+    referralCode: 'ROHANDEMO3',
+    planName: 'Pro',
+    referredByEmail: 'alex@demo.local',
+  },
+  {
+    name: 'Maya Demo User',
+    email: 'maya@demo.local',
+    referralCode: 'MAYADEMO04',
+  },
+  {
+    name: 'Explorer Test User',
+    email: 'user@edupath.local',
+    referralCode: 'EDUPATH01',
+    planName: 'Starter',
+  },
+];
 
 const cover = (seed: string) =>
   `https://images.unsplash.com/photo-${seed}?auto=format&fit=crop&w=1200&q=70`;
@@ -28,10 +78,16 @@ async function run() {
   const settingsModel = app.get<Model<PlatformSettingsDocument>>(getModelToken(PlatformSettings.name));
   const landingModel = app.get<Model<LandingHeroDocument>>(getModelToken(LandingHero.name));
   const landingPricingModel = app.get<Model<LandingPricingDocument>>(getModelToken(LandingPricing.name));
+  const planModel = app.get<Model<PlanDocument>>(getModelToken(Plan.name));
+  const walletModel = app.get<Model<WalletDocument>>(getModelToken(Wallet.name));
+  const promoCouponModel = app.get<Model<PromoCouponDocument>>(getModelToken(PromoCoupon.name));
 
   await settingsModel.updateOne(
     { key: 'global' },
-    { $setOnInsert: { key: 'global' } },
+    {
+      $set: { memberPromoBuyerDiscountPercent: 40 },
+      $setOnInsert: { key: 'global' },
+    },
     { upsert: true },
   );
 
@@ -50,6 +106,30 @@ async function run() {
     { upsert: true },
   );
 
+  const planDefs = [
+    { name: 'Starter', price: 999, features: ['Core courses', 'Community access'] },
+    { name: 'Pro', price: 2999, features: ['All courses', 'Affiliate tools', 'Priority support'] },
+    { name: 'Elite', price: 9999, features: ['Everything in Pro', '1:1 mentorship', 'Highest commissions'] },
+  ];
+  const planByName: Record<string, PlanDocument> = {};
+  for (const p of planDefs) {
+    let doc = await planModel.findOne({ name: p.name });
+    if (!doc) doc = await planModel.create(p);
+    planByName[p.name] = doc;
+  }
+
+  const couponDefs = [
+    { code: 'SAVE10', discountType: 'percentage' as const, discountValue: 10, minPurchase: 0 },
+    { code: 'FLAT200', discountType: 'fixed' as const, discountValue: 200, minPurchase: 500 },
+  ];
+  for (const c of couponDefs) {
+    const exists = await promoCouponModel.findOne({ code: c.code });
+    if (!exists) {
+      await promoCouponModel.create({ ...c, active: true, maxUsage: 0, usedCount: 0 });
+      console.log('Seeded promo coupon', c.code);
+    }
+  }
+
   const adminEmail = 'admin@edupath.local';
   let admin = await userModel.findOne({ email: adminEmail });
   if (!admin) {
@@ -64,6 +144,62 @@ async function run() {
     });
     // eslint-disable-next-line no-console
     console.log('Created admin:', adminEmail, '/ Admin123!');
+  }
+
+  const demoHash = await bcrypt.hash(DEMO_PASSWORD, 10);
+  const userByEmail: Record<string, UserDocument> = { [adminEmail]: admin };
+
+  for (const def of DUMMY_USERS) {
+    const email = def.email.toLowerCase();
+    let doc = await userModel.findOne({ email });
+    const planId = def.planName ? planByName[def.planName]?._id ?? null : null;
+    const referredBy = def.referredByEmail
+      ? userByEmail[def.referredByEmail.toLowerCase()]?._id ?? null
+      : null;
+
+    if (!doc) {
+      doc = await userModel.create({
+        name: def.name,
+        email,
+        password: demoHash,
+        referralCode: def.referralCode.toUpperCase(),
+        role: def.role ?? UserRole.USER,
+        emailVerified: true,
+        accountActive: true,
+        planId,
+        referredBy,
+      });
+      if (referredBy) {
+        await userModel.findByIdAndUpdate(referredBy, {
+          $inc: { totalReferralsCount: 1, directReferralsCount: 1 },
+        });
+      }
+      console.log('Created demo user:', email);
+    } else {
+      await userModel.updateOne(
+        { _id: doc._id },
+        {
+          $set: {
+            name: def.name,
+            password: demoHash,
+            referralCode: def.referralCode.toUpperCase(),
+            emailVerified: true,
+            accountActive: true,
+            planId,
+            referredBy,
+          },
+        },
+      );
+      doc = (await userModel.findById(doc._id))!;
+      console.log('Updated demo user:', email);
+    }
+
+    const walletExists = await walletModel.exists({ userId: doc._id });
+    if (!walletExists) {
+      await walletModel.create({ userId: doc._id, availableBalance: 0, pendingBalance: 0, currency: 'INR' });
+    }
+
+    userByEmail[email] = doc;
   }
 
   const categoryDefs = [
@@ -214,15 +350,92 @@ async function run() {
     }
   }
 
+  const publishedCourses = await courseModel.find({ isPublished: true }).select('_id slug level').lean();
+  const bySlug = Object.fromEntries(publishedCourses.map((c) => [c.slug, c._id.toString()]));
+  const allCourseIdStrings = publishedCourses.map((c) => c._id.toString());
+  /** Starter = small bundle only (not full library). */
+  const starterCourseIds = ['ui-design', 'mobile']
+    .map((s) => bySlug[s])
+    .filter(Boolean);
+  /** Pro / Elite = full seeded catalog. */
+  const proCourseIds = allCourseIdStrings;
+
+  const pricingDoc = await landingPricingModel.findOne({ key: 'default' }).lean();
+  const baseTiers = pricingDoc?.tiers?.length ? pricingDoc.tiers : DEFAULT_LANDING_PRICING_TIERS;
+  const tiersWithCourses = baseTiers.map((t: { id: string }) => ({
+    ...t,
+    courseIds:
+      t.id === 'starter'
+        ? starterCourseIds.length
+          ? starterCourseIds
+          : allCourseIdStrings.slice(0, 2)
+        : proCourseIds,
+  }));
+  await landingPricingModel.updateOne(
+    { key: 'default' },
+    { $set: { tiers: tiersWithCourses } },
+    { upsert: true },
+  );
+
+  const plansService = app.get(PlansService);
+  await plansService.syncFromLandingPricing();
+
+  const tierStarter = await planModel.findOne({ tierId: 'starter' });
+  const tierPro = await planModel.findOne({ tierId: 'pro' });
+  for (const def of DUMMY_USERS) {
+    if (!def.planName) continue;
+    const tierPlan =
+      def.planName === 'Starter' ? tierStarter : def.planName === 'Pro' ? tierPro : null;
+    if (tierPlan) {
+      await userModel.updateOne(
+        { email: def.email.toLowerCase() },
+        { $set: { planId: tierPlan._id, accountActive: true } },
+      );
+    }
+  }
+
   // eslint-disable-next-line no-console
-  console.log('\n--- Admin (admin panel sign-in) ---');
+  console.log('\n========== SEED CREDENTIALS ==========\n');
+
   // eslint-disable-next-line no-console
-  console.log('Email:', adminEmail);
+  console.log('--- Admin (admin panel: http://localhost:5174) ---');
   // eslint-disable-next-line no-console
-  console.log('Password: Admin123!');
+  console.log('Email:    ', adminEmail);
   // eslint-disable-next-line no-console
+  console.log('Password: ', 'Admin123!');
+  // eslint-disable-next-line no-console
+  console.log('Promo:    ', 'ADMINSEED1 (admin referral code)\n');
+
+  // eslint-disable-next-line no-console
+  console.log('--- Demo users (explorer: http://localhost:5173) — password for all: ' + DEMO_PASSWORD + ' ---');
+  for (const def of DUMMY_USERS) {
+    const planNote = def.planName ? `plan: ${def.planName}` : 'no plan (promo not valid at checkout)';
+    const refNote = def.referredByEmail ? `referred by ${def.referredByEmail}` : 'no upline';
+    // eslint-disable-next-line no-console
+    console.log(`\n${def.name}`);
+    // eslint-disable-next-line no-console
+    console.log('  Email:    ', def.email);
+    // eslint-disable-next-line no-console
+    console.log('  Password: ', DEMO_PASSWORD);
+    // eslint-disable-next-line no-console
+    console.log('  Promo:    ', def.referralCode, `(${planNote}, ${refNote})`);
+  }
+
+  // eslint-disable-next-line no-console
+  console.log('\n--- Quick copy (login | promo) ---');
+  for (const def of DUMMY_USERS) {
+    // eslint-disable-next-line no-console
+    console.log(`${def.email} | ${DEMO_PASSWORD} | ${def.referralCode}`);
+  }
+
+  // eslint-disable-next-line no-console
+  console.log('\n--- Discount coupons (buyer price off at Sell Plan) ---');
+  console.log('SAVE10  — 10% off any plan');
+  console.log('FLAT200 — ₹200 off when plan price ≥ ₹500');
+  console.log('\nMember codes (ALEXDEMO01, etc.) = commission only, no buyer discount.');
   console.log(
-    '(If this admin already existed before seed, password was not reset — use your saved password or update the user in DB.)',
+    '\nNote: Promo codes with a plan work at checkout. Maya has no plan — login only.\n' +
+      'If admin existed before seed, Admin password was NOT reset.\n',
   );
 
   await app.close();

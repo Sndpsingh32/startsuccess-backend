@@ -26,12 +26,13 @@ let PaymentGatewayService = PaymentGatewayService_1 = class PaymentGatewayServic
         this.paymentModel = paymentModel;
         this.logger = new common_1.Logger(PaymentGatewayService_1.name);
     }
-    async createStripeLikeOrder(payerUserId, courseId, amount, couponCode) {
+    async createStripeLikeOrder(payerUserId, amount, opts) {
         const secret = this.config.get('stripe.secretKey');
         const doc = await this.paymentModel.create({
             payerUserId: new mongoose_2.Types.ObjectId(payerUserId),
-            courseId: new mongoose_2.Types.ObjectId(courseId),
-            couponCode,
+            courseId: opts.courseId ? new mongoose_2.Types.ObjectId(opts.courseId) : null,
+            planId: opts.planId ? new mongoose_2.Types.ObjectId(opts.planId) : null,
+            couponCode: opts.couponCode,
             amount,
             currency: 'INR',
             provider: 'stripe',
@@ -46,12 +47,13 @@ let PaymentGatewayService = PaymentGatewayService_1 = class PaymentGatewayServic
                 : 'Stripe key missing — payment marked completed for local development only',
         };
     }
-    async createRazorpayLikeOrder(payerUserId, courseId, amount, couponCode) {
+    async createRazorpayLikeOrder(payerUserId, amount, opts) {
         const key = this.config.get('razorpay.keyId');
         const doc = await this.paymentModel.create({
             payerUserId: new mongoose_2.Types.ObjectId(payerUserId),
-            courseId: new mongoose_2.Types.ObjectId(courseId),
-            couponCode,
+            courseId: opts.courseId ? new mongoose_2.Types.ObjectId(opts.courseId) : null,
+            planId: opts.planId ? new mongoose_2.Types.ObjectId(opts.planId) : null,
+            couponCode: opts.couponCode,
             amount,
             currency: 'INR',
             provider: 'razorpay',

@@ -42,6 +42,20 @@ let AnalyticsController = class AnalyticsController {
         ]);
         return { platformRevenueTotal: agg[0]?.total || 0 };
     }
+    leaderboard(period) {
+        const p = period || 'monthly';
+        if (!['daily', 'weekly', 'monthly', 'overall'].includes(p)) {
+            return this.analytics.leaderboard('monthly');
+        }
+        return this.analytics.leaderboard(p);
+    }
+    incomeUsers(page, limit, search) {
+        return this.analytics.incomeUsersList({
+            page: parseInt(page || '1', 10),
+            limit: parseInt(limit || '50', 10),
+            search,
+        });
+    }
 };
 exports.AnalyticsController = AnalyticsController;
 __decorate([
@@ -73,6 +87,27 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "platformRevenue", null);
+__decorate([
+    (0, common_1.Get)('leaderboard'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    __param(0, (0, common_1.Query)('period')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], AnalyticsController.prototype, "leaderboard", null);
+__decorate([
+    (0, common_1.Get)('income/users'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(app_constants_1.UserRole.ADMIN),
+    (0, swagger_1.ApiBearerAuth)(),
+    __param(0, (0, common_1.Query)('page')),
+    __param(1, (0, common_1.Query)('limit')),
+    __param(2, (0, common_1.Query)('search')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", void 0)
+], AnalyticsController.prototype, "incomeUsers", null);
 exports.AnalyticsController = AnalyticsController = __decorate([
     (0, swagger_1.ApiTags)('analytics'),
     (0, common_1.Controller)('analytics'),

@@ -60,6 +60,42 @@ __decorate([
     (0, mongoose_1.Prop)(),
     __metadata("design:type", String)
 ], Withdrawal.prototype, "adminNote", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", Date)
+], Withdrawal.prototype, "paidAt", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ type: mongoose_2.Types.ObjectId, ref: 'User' }),
+    __metadata("design:type", mongoose_2.Types.ObjectId)
+], Withdrawal.prototype, "processedBy", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: 'razorpayx' }),
+    __metadata("design:type", String)
+], Withdrawal.prototype, "payoutProvider", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], Withdrawal.prototype, "razorpayContactId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], Withdrawal.prototype, "razorpayFundAccountId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], Withdrawal.prototype, "razorpayPayoutId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], Withdrawal.prototype, "payoutProviderStatus", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", String)
+], Withdrawal.prototype, "payoutError", void 0);
+__decorate([
+    (0, mongoose_1.Prop)(),
+    __metadata("design:type", Date)
+], Withdrawal.prototype, "payoutInitiatedAt", void 0);
 exports.Withdrawal = Withdrawal = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true, collection: 'withdrawals' })
 ], Withdrawal);

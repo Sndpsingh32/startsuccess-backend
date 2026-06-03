@@ -1,10 +1,13 @@
 import { RawBodyRequest } from '@nestjs/common';
 import { PaymentGatewayService } from './payment-gateway.service';
+import { PlanSalesService } from '../plan-sales/plan-sales.service';
 export declare class PaymentsController {
     private readonly payments;
-    constructor(payments: PaymentGatewayService);
+    private readonly planSales;
+    constructor(payments: PaymentGatewayService, planSales: PlanSalesService);
     stripeOrder(req: any, body: {
-        courseId: string;
+        courseId?: string;
+        planId?: string;
         amount: number;
         couponCode?: string;
     }): Promise<{
@@ -17,7 +20,8 @@ export declare class PaymentsController {
         message: string;
     }>;
     rzpOrder(req: any, body: {
-        courseId: string;
+        courseId?: string;
+        planId?: string;
         amount: number;
         couponCode?: string;
     }): Promise<{
@@ -33,7 +37,7 @@ export declare class PaymentsController {
     stripeWebhook(req: RawBodyRequest<Request>, sig: string): {
         received: boolean;
     };
-    rzpWebhook(body: any): {
+    rzpWebhook(body: any): Promise<{
         received: boolean;
-    };
+    }>;
 }

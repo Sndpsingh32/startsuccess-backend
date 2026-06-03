@@ -22,11 +22,13 @@ const commission_schema_1 = require("./schemas/commission.schema");
 const user_schema_1 = require("../users/user.schema");
 const wallet_repository_1 = require("../wallet/wallet.repository");
 const settings_service_1 = require("../settings/settings.service");
+const plan_sale_schema_1 = require("../plan-sales/plan-sale.schema");
 const app_constants_1 = require("../../common/constants/app.constants");
 let RevenueDistributionService = RevenueDistributionService_1 = class RevenueDistributionService {
-    constructor(connection, purchaseModel, commissionModel, userModel, walletRepo, settingsService) {
+    constructor(connection, purchaseModel, planSaleModel, commissionModel, userModel, walletRepo, settingsService) {
         this.connection = connection;
         this.purchaseModel = purchaseModel;
+        this.planSaleModel = planSaleModel;
         this.commissionModel = commissionModel;
         this.userModel = userModel;
         this.walletRepo = walletRepo;
@@ -104,6 +106,68 @@ let RevenueDistributionService = RevenueDistributionService_1 = class RevenueDis
         }
         this.logger.log(`Distributed commissions for purchase ${purchaseId}`);
     }
+    async distributePlanSale(sale, amount, seller) {
+        if (sale.commissionsDistributed)
+            return;
+        const settings = await this.settingsService.getGlobal();
+        const ownerPct = settings.couponOwnerPercent;
+        const platPct = settings.platformPercent;
+        const parentPct = settings.directParentPercent;
+        const ownerAmount = round2((amount * ownerPct) / 100);
+        let platformAmount = round2((amount * platPct) / 100);
+        let parentAmount = round2((amount * parentPct) / 100);
+        const parentId = seller.referredBy ? seller.referredBy.toString() : null;
+        if (!parentId) {
+            platformAmount = round2(platformAmount + parentAmount);
+            parentAmount = 0;
+        }
+        const saleOid = sale._id;
+        const saleId = saleOid.toString();
+        const ownerId = seller._id.toString();
+        const commissions = [
+            {
+                planSaleId: saleOid,
+                purchaseId: null,
+                beneficiaryUserId: new mongoose_2.Types.ObjectId(ownerId),
+                beneficiaryRole: 'coupon_owner',
+                incomeCategory: 'active',
+                amount: ownerAmount,
+                currency: 'INR',
+                percentApplied: ownerPct,
+            },
+            {
+                planSaleId: saleOid,
+                purchaseId: null,
+                beneficiaryUserId: null,
+                beneficiaryRole: 'platform',
+                incomeCategory: 'platform',
+                amount: platformAmount,
+                currency: 'INR',
+                percentApplied: platPct + (!parentId ? parentPct : 0),
+            },
+        ];
+        if (parentId && parentAmount > 0) {
+            commissions.push({
+                planSaleId: saleOid,
+                purchaseId: null,
+                beneficiaryUserId: new mongoose_2.Types.ObjectId(parentId),
+                beneficiaryRole: 'direct_parent',
+                incomeCategory: 'passive',
+                amount: parentAmount,
+                currency: 'INR',
+                percentApplied: parentPct,
+            });
+        }
+        await this.commissionModel.insertMany(commissions);
+        await this.walletRepo.adjustAvailable(ownerId, ownerAmount, app_constants_1.WalletTransactionType.AFFILIATE_COMMISSION_ACTIVE, { meta: { planSaleId: saleId } });
+        await this.userModel.findByIdAndUpdate(ownerId, { $inc: { activeIncome: ownerAmount } }).exec();
+        if (parentId && parentAmount > 0) {
+            await this.walletRepo.adjustAvailable(parentId, parentAmount, app_constants_1.WalletTransactionType.AFFILIATE_COMMISSION_PASSIVE, { meta: { planSaleId: saleId } });
+            await this.userModel.findByIdAndUpdate(parentId, { $inc: { passiveIncome: parentAmount } }).exec();
+        }
+        await this.planSaleModel.findByIdAndUpdate(saleOid, { commissionsDistributed: true }).exec();
+        this.logger.log(`Distributed plan sale commissions for ${saleId}`);
+    }
     async distributePlatformOnly(purchase) {
         if (purchase.commissionsDistributed)
             return;
@@ -135,9 +199,11 @@ exports.RevenueDistributionService = RevenueDistributionService = RevenueDistrib
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectConnection)()),
     __param(1, (0, mongoose_1.InjectModel)(purchase_schema_1.Purchase.name)),
-    __param(2, (0, mongoose_1.InjectModel)(commission_schema_1.Commission.name)),
-    __param(3, (0, mongoose_1.InjectModel)(user_schema_1.User.name)),
+    __param(2, (0, mongoose_1.InjectModel)(plan_sale_schema_1.PlanSale.name)),
+    __param(3, (0, mongoose_1.InjectModel)(commission_schema_1.Commission.name)),
+    __param(4, (0, mongoose_1.InjectModel)(user_schema_1.User.name)),
     __metadata("design:paramtypes", [mongoose_2.Connection,
+        mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,

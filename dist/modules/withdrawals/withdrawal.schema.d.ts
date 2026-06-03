@@ -13,6 +13,15 @@ export declare class Withdrawal {
     upiId: string;
     paypalEmail: string;
     adminNote: string;
+    paidAt?: Date;
+    processedBy?: Types.ObjectId;
+    payoutProvider?: string;
+    razorpayContactId?: string;
+    razorpayFundAccountId?: string;
+    razorpayPayoutId?: string;
+    payoutProviderStatus?: string;
+    payoutError?: string;
+    payoutInitiatedAt?: Date;
 }
 export declare const WithdrawalSchema: import("mongoose").Schema<Withdrawal, import("mongoose").Model<Withdrawal, any, any, any, Document<unknown, any, Withdrawal, any, {}> & Withdrawal & {
     _id: Types.ObjectId;

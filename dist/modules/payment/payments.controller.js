@@ -17,22 +17,45 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const payment_gateway_service_1 = require("./payment-gateway.service");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
+const plan_sales_service_1 = require("../plan-sales/plan-sales.service");
 let PaymentsController = class PaymentsController {
-    constructor(payments) {
+    constructor(payments, planSales) {
         this.payments = payments;
+        this.planSales = planSales;
     }
     stripeOrder(req, body) {
-        return this.payments.createStripeLikeOrder(req.user._id.toString(), body.courseId, body.amount, body.couponCode);
+        return this.payments.createStripeLikeOrder(req.user._id.toString(), body.amount, {
+            courseId: body.courseId,
+            planId: body.planId,
+            couponCode: body.couponCode,
+        });
     }
     rzpOrder(req, body) {
-        return this.payments.createRazorpayLikeOrder(req.user._id.toString(), body.courseId, body.amount, body.couponCode);
+        return this.payments.createRazorpayLikeOrder(req.user._id.toString(), body.amount, {
+            courseId: body.courseId,
+            planId: body.planId,
+            couponCode: body.couponCode,
+        });
     }
     stripeWebhook(req, sig) {
         this.payments.logWebhook('stripe', { sig, body: req.body });
         return { received: true };
     }
-    rzpWebhook(body) {
+    async rzpWebhook(body) {
         this.payments.logWebhook('razorpay', body);
+        const orderId = body?.payload?.payment?.entity?.order_id ||
+            body?.payload?.order?.entity?.id ||
+            body?.order_id;
+        if (orderId) {
+            const pay = await this.payments.markCompletedByExternal('razorpay', orderId);
+            if (pay?.planId) {
+                try {
+                    await this.planSales.completeSaleByPaymentId(pay._id.toString());
+                }
+                catch {
+                }
+            }
+        }
         return { received: true };
     }
 };
@@ -70,11 +93,13 @@ __decorate([
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], PaymentsController.prototype, "rzpWebhook", null);
 exports.PaymentsController = PaymentsController = __decorate([
     (0, swagger_1.ApiTags)('payments'),
     (0, common_1.Controller)('payments'),
-    __metadata("design:paramtypes", [payment_gateway_service_1.PaymentGatewayService])
+    __param(1, (0, common_1.Inject)((0, common_1.forwardRef)(() => plan_sales_service_1.PlanSalesService))),
+    __metadata("design:paramtypes", [payment_gateway_service_1.PaymentGatewayService,
+        plan_sales_service_1.PlanSalesService])
 ], PaymentsController);
 //# sourceMappingURL=payments.controller.js.map

@@ -3,7 +3,8 @@ import { PaymentStatus } from '../../../common/constants/app.constants';
 export type PaymentDocument = Payment & Document;
 export declare class Payment {
     payerUserId: Types.ObjectId;
-    courseId: Types.ObjectId;
+    courseId: Types.ObjectId | null;
+    planId: Types.ObjectId | null;
     couponCode: string;
     amount: number;
     currency: string;

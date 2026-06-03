@@ -8,6 +8,8 @@ export declare class LandingHero {
         highlight: string;
         suffix: string;
         description: string;
+        imageUrl?: string;
+        videoUrl?: string;
     }>;
     trustPills: string[];
     announcementBadge: string;

@@ -6,6 +6,7 @@ export declare class SettingsController {
         couponOwnerPercent: number;
         platformPercent: number;
         directParentPercent: number;
+        memberPromoBuyerDiscountPercent: number;
     }>;
     adminUpdate(body: Record<string, number | boolean>): Promise<import("./schemas/platform-settings.schema").PlatformSettingsDocument>;
 }

@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LandingAdminController = exports.PublicController = void 0;
 const common_1 = require("@nestjs/common");
+const users_service_1 = require("../users/users.service");
 const swagger_1 = require("@nestjs/swagger");
 const throttler_1 = require("@nestjs/throttler");
 const public_service_1 = require("./public.service");
@@ -23,8 +24,9 @@ const roles_decorator_1 = require("../../common/decorators/roles.decorator");
 const app_constants_1 = require("../../common/constants/app.constants");
 const patch_landing_pricing_dto_1 = require("./dto/patch-landing-pricing.dto");
 let PublicController = class PublicController {
-    constructor(publicService) {
+    constructor(publicService, usersService) {
         this.publicService = publicService;
+        this.usersService = usersService;
     }
     hero() {
         return this.publicService.getHeroPayload();
@@ -37,6 +39,9 @@ let PublicController = class PublicController {
     }
     pricingPlans() {
         return this.publicService.getPricingPlansPayload();
+    }
+    validateReferral(body) {
+        return this.usersService.validateReferralCodeForCheckout(body.code);
     }
 };
 exports.PublicController = PublicController;
@@ -65,11 +70,19 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], PublicController.prototype, "pricingPlans", null);
+__decorate([
+    (0, common_1.Post)('validate-referral'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], PublicController.prototype, "validateReferral", null);
 exports.PublicController = PublicController = __decorate([
     (0, swagger_1.ApiTags)('public'),
     (0, common_1.Controller)('public'),
     (0, throttler_1.SkipThrottle)(),
-    __metadata("design:paramtypes", [public_service_1.PublicService])
+    __metadata("design:paramtypes", [public_service_1.PublicService,
+        users_service_1.UsersService])
 ], PublicController);
 let LandingAdminController = class LandingAdminController {
     constructor(publicService) {

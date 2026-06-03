@@ -7,14 +7,22 @@ import { UsersModule } from '../users/users.module';
 import { CoursesModule } from '../courses/courses.module';
 import { CommissionModule } from '../commission/commission.module';
 import { SettingsModule } from '../settings/settings.module';
+import { PaymentModule } from '../payment/payment.module';
+import { PlansModule } from '../plans/plans.module';
+import { Payment, PaymentSchema } from '../payment/schemas/payment.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Purchase.name, schema: PurchaseSchema }]),
+    MongooseModule.forFeature([
+      { name: Purchase.name, schema: PurchaseSchema },
+      { name: Payment.name, schema: PaymentSchema },
+    ]),
     forwardRef(() => UsersModule),
     CoursesModule,
     CommissionModule,
     SettingsModule,
+    forwardRef(() => PaymentModule),
+    PlansModule,
   ],
   controllers: [PurchasesController],
   providers: [PurchasesService],

@@ -11,6 +11,7 @@ export declare class LandingPricingTierDto {
     savings: string;
     description: string;
     accent: string;
+    courseIds?: string[];
 }
 export declare class LandingPricingCompareRowDto {
     label: string;

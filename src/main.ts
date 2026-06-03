@@ -34,11 +34,15 @@ async function bootstrap() {
   const uploadRoot = join(process.cwd(), uploadDirName);
   const videosDir = join(uploadRoot, 'videos');
   const kycDir = join(uploadRoot, 'kyc');
+  const mediaDir = join(uploadRoot, 'media');
   if (!existsSync(videosDir)) {
     mkdirSync(videosDir, { recursive: true });
   }
   if (!existsSync(kycDir)) {
     mkdirSync(kycDir, { recursive: true });
+  }
+  if (!existsSync(mediaDir)) {
+    mkdirSync(mediaDir, { recursive: true });
   }
   app.useStaticAssets(uploadRoot, { prefix: '/uploads/' });
 
@@ -60,7 +64,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = config.get<number>('port') || 3000;
+  const port = process.env.PORT || 3000;
   await app.listen(port);
   // eslint-disable-next-line no-console
   console.log(`API http://localhost:${port}  Swagger /api/docs`);

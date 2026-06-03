@@ -7,21 +7,33 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Purchase, PurchaseDocument } from './purchase.schema';
+import { Payment, PaymentDocument } from '../payment/schemas/payment.schema';
 import { UsersService } from '../users/users.service';
 import { CoursesService } from '../courses/courses.service';
 import { RevenueDistributionService } from '../commission/revenue-distribution.service';
 import { SettingsService } from '../settings/settings.service';
+import { PlansService } from '../plans/plans.service';
 import { PaymentStatus } from '../../common/constants/app.constants';
 
 @Injectable()
 export class PurchasesService {
   constructor(
     @InjectModel(Purchase.name) private purchaseModel: Model<PurchaseDocument>,
+    @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     private usersService: UsersService,
     private coursesService: CoursesService,
     private revenueDistributionService: RevenueDistributionService,
     private settingsService: SettingsService,
+    private plansService: PlansService,
   ) {}
+
+  /** Purchase completed OR active plan includes this course. */
+  async hasCourseAccess(userId: string, courseOid: Types.ObjectId): Promise<boolean> {
+    if (await this.hasCompletedCourseAccess(userId, courseOid)) return true;
+    const buyer = await this.usersService.findById(userId);
+    if (!buyer?.accountActive || !buyer.planId) return false;
+    return this.plansService.planIncludesCourse(buyer.planId as Types.ObjectId, courseOid);
+  }
 
   effectiveCoursePrice(course: any): number {
     const d = course.discountPrice;
@@ -83,13 +95,19 @@ export class PurchasesService {
       }
     }
 
+    let paymentStatus = PaymentStatus.PENDING;
+    if (purchase.paymentId) {
+      const pay = await this.paymentModel.findById(purchase.paymentId).lean();
+      if (pay?.status === PaymentStatus.COMPLETED) paymentStatus = PaymentStatus.COMPLETED;
+    }
+
     const doc = new this.purchaseModel({
       courseId: courseOid,
       buyerId: buyerOid,
       couponUsed: effectiveCoupon,
       amount: paid,
       currency: purchase.currency || 'INR',
-      paymentStatus: PaymentStatus.PENDING,
+      paymentStatus,
       paymentId: purchase.paymentId || null,
       commissionsDistributed: false,
       courseSnapshot: {
@@ -97,6 +115,7 @@ export class PurchasesService {
         slug: course.slug,
         price: course.price,
         discountPrice: course.discountPrice,
+        thumbnailUrl: (course as any).thumbnailUrl,
       },
     });
     const saved = await doc.save();

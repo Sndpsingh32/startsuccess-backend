@@ -12,12 +12,20 @@ const mongoose_1 = require("@nestjs/mongoose");
 const plans_service_1 = require("./plans.service");
 const plans_controller_1 = require("./plans.controller");
 const plan_schema_1 = require("./plan.schema");
+const course_schema_1 = require("../courses/course.schema");
+const landing_pricing_schema_1 = require("../public/schemas/landing-pricing.schema");
 let PlansModule = class PlansModule {
 };
 exports.PlansModule = PlansModule;
 exports.PlansModule = PlansModule = __decorate([
     (0, common_1.Module)({
-        imports: [mongoose_1.MongooseModule.forFeature([{ name: plan_schema_1.Plan.name, schema: plan_schema_1.PlanSchema }])],
+        imports: [
+            mongoose_1.MongooseModule.forFeature([
+                { name: plan_schema_1.Plan.name, schema: plan_schema_1.PlanSchema },
+                { name: course_schema_1.Course.name, schema: course_schema_1.CourseSchema },
+                { name: landing_pricing_schema_1.LandingPricing.name, schema: landing_pricing_schema_1.LandingPricingSchema },
+            ]),
+        ],
         controllers: [plans_controller_1.PlansController],
         providers: [plans_service_1.PlansService],
         exports: [plans_service_1.PlansService],

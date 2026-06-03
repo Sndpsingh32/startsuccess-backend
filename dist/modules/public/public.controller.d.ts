@@ -1,8 +1,10 @@
+import { UsersService } from '../users/users.service';
 import { PublicService } from './public.service';
 import { PatchLandingPricingDto } from './dto/patch-landing-pricing.dto';
 export declare class PublicController {
     private readonly publicService;
-    constructor(publicService: PublicService);
+    private readonly usersService;
+    constructor(publicService: PublicService, usersService: UsersService);
     hero(): Promise<{
         slides: {
             eyebrow: string;
@@ -10,6 +12,8 @@ export declare class PublicController {
             highlight: string;
             suffix: string;
             description: string;
+            imageUrl?: string;
+            videoUrl?: string;
         }[];
         trustPills: string[];
         announcementBadge: string;
@@ -40,6 +44,13 @@ export declare class PublicController {
     pricingPlans(): Promise<{
         tiers: import("./schemas/landing-pricing.schema").LandingPricingTier[];
         compareRows: import("./schemas/landing-pricing.schema").LandingPricingCompareRow[];
+    }>;
+    validateReferral(body: {
+        code: string;
+    }): Promise<{
+        valid: true;
+        code: string;
+        referrerName: string;
     }>;
 }
 export declare class LandingAdminController {

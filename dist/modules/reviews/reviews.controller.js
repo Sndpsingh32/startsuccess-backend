@@ -31,6 +31,13 @@ let ReviewsController = class ReviewsController {
     list(courseId) {
         return this.svc.listByCourse(courseId);
     }
+    adminList(page, limit, courseId) {
+        return this.svc.listAll({
+            page: parseInt(page || '1', 10),
+            limit: parseInt(limit || '20', 10),
+            courseId,
+        });
+    }
     remove(id) {
         return this.svc.remove(id);
     }
@@ -53,6 +60,18 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], ReviewsController.prototype, "list", null);
+__decorate([
+    (0, common_1.Get)('admin/all'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(app_constants_1.UserRole.ADMIN),
+    (0, swagger_1.ApiBearerAuth)(),
+    __param(0, (0, common_1.Query)('page')),
+    __param(1, (0, common_1.Query)('limit')),
+    __param(2, (0, common_1.Query)('courseId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", void 0)
+], ReviewsController.prototype, "adminList", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

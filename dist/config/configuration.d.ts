@@ -20,6 +20,9 @@ declare const _default: () => {
         keyId: string;
         keySecret: string;
         webhookSecret: string;
+        xAccountNumber: string;
+        payoutMode: "IMPS" | "NEFT" | "RTGS";
+        payoutMock: boolean;
     };
     cors: {
         origin: string[];
@@ -32,6 +35,10 @@ declare const _default: () => {
     };
     platform: {
         userId: string;
+    };
+    mail: {
+        webhookUrl: string;
+        from: string;
     };
 };
 export default _default;

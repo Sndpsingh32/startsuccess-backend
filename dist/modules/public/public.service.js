@@ -23,162 +23,25 @@ const landing_pricing_schema_1 = require("./schemas/landing-pricing.schema");
 const course_schema_1 = require("../courses/course.schema");
 const category_schema_1 = require("../categories/category.schema");
 const course_mapper_1 = require("./course-mapper");
-exports.DEFAULT_LANDING_HERO = {
-    key: 'default',
-    slides: [
-        {
-            eyebrow: 'Career transformation',
-            title: 'Learn skills that',
-            highlight: 'change careers',
-            suffix: '.',
-            description: 'Hand-crafted courses by industry experts. Live mentorship, real projects, and a referral program where everyone wins.',
-        },
-        {
-            eyebrow: 'Industry-ready learning',
-            title: 'Master tech that',
-            highlight: 'builds futures',
-            suffix: '.',
-            description: 'Join 50,000+ students who transformed their careers with personalized guidance from top mentors.',
-        },
-        {
-            eyebrow: 'Outcomes that matter',
-            title: 'Start your',
-            highlight: 'dream job',
-            suffix: ' today.',
-            description: '89% placement rate. Average 3x salary increase. Learn what companies actually want from day one.',
-        },
-    ],
-    trustPills: ['50K+ learners', 'Live mentorship', 'Referral rewards'],
-    announcementBadge: 'New cohorts every Monday',
-    visualMeta: [
-        {
-            chip: 'Placement ready',
-            metricLabel: 'Completion rate',
-            metricValue: '92%',
-            metricHint: 'Portfolio-ready finish',
-        },
-        {
-            chip: 'Live cohort',
-            metricLabel: 'Avg salary lift',
-            metricValue: '3x',
-            metricHint: 'After career switch',
-        },
-        {
-            chip: 'New batch',
-            metricLabel: 'Hiring partners',
-            metricValue: '250+',
-            metricHint: 'Active hiring network',
-        },
-    ],
-    referralBonusLabel: '₹500 / referral',
-    statCards: [
-        { key: 'learners', value: 50, suffix: 'K+', label: 'Learners' },
-        { key: 'courses', value: 200, suffix: '+', label: 'Courses' },
-        { key: 'satisfaction', value: 98, suffix: '%', label: 'Satisfaction' },
-    ],
-    offers: [
-        {
-            id: 'o1',
-            title: 'Flat 40% off on Pro Learner',
-            subtitle: 'Festive season special — limited to 48 hours',
-            cta: 'Claim Offer',
-            tone: 'primary',
-        },
-        {
-            id: 'o2',
-            title: 'Refer & Earn ₹500 per friend',
-            subtitle: 'Your friends get 20% off, you get instant credit',
-            cta: 'Get Referral Link',
-            tone: 'accent',
-        },
-        {
-            id: 'o3',
-            title: 'AI Engineering Bootcamp — New Batch',
-            subtitle: 'Cohort starts Monday with live mentorship',
-            cta: 'Enroll Now',
-            tone: 'dark',
-        },
-    ],
-};
-exports.DEFAULT_LANDING_PRICING_TIERS = [
-    {
-        id: 'starter',
-        name: 'Starter',
-        tagline: 'Perfect to dip your toes in',
-        price: 499,
-        period: 'month',
-        features: [
-            'Access to 10 starter courses',
-            'Community support',
-            'Mobile app access',
-            'Certificate on completion',
-        ],
-        highlight: false,
-        chip: '10 starter courses',
-        savings: 'Best for first-time learners',
-        description: 'Start with curated beginner courses, community support, and certificates while you explore which skill path fits you best.',
-        accent: 'from-primary/70 via-primary/40 to-transparent',
-    },
-    {
-        id: 'pro',
-        name: 'Pro Learner',
-        tagline: 'Most popular for serious learners',
-        price: 1499,
-        period: 'month',
-        features: [
-            'Access to all 200+ courses',
-            'Live mentorship sessions',
-            'Project reviews',
-            'Verified certificates',
-            'Offline downloads',
-        ],
-        highlight: true,
-        badge: 'Most Popular',
-        chip: '200+ full library',
-        savings: 'Save ₹3,000+ vs buying courses',
-        description: 'Unlock the full Star Success library with live mentorship, project reviews, verified certificates, and offline access for serious learners.',
-        accent: 'from-white/35 via-white/10 to-transparent',
-    },
-    {
-        id: 'elite',
-        name: 'Elite Career',
-        tagline: 'Career-changing transformation',
-        price: 3999,
-        period: 'month',
-        features: [
-            'Everything in Pro',
-            '1-on-1 weekly coaching',
-            'Job placement assistance',
-            'Resume & interview prep',
-            'Lifetime course access',
-        ],
-        badge: 'Best Value',
-        chip: 'Career transformation',
-        savings: 'Includes placement support',
-        description: 'Go beyond courses with weekly 1-on-1 coaching, placement assistance, interview prep, and lifetime access for a full career switch.',
-        accent: 'from-accent/80 via-accent/35 to-transparent',
-    },
-];
-exports.DEFAULT_PRICING_COMPARE_ROWS = [
-    { label: 'Course access', cells: ['10 starter', 'All 200+', 'All 200+ + future'] },
-    { label: 'Mentor support', cells: ['—', 'Group sessions', '1-on-1 weekly'] },
-    { label: 'Project reviews', cells: ['—', '✓', 'Priority'] },
-    { label: 'Certificates', cells: ['Basic', 'Verified', 'Verified + LinkedIn'] },
-    { label: 'Job placement', cells: ['—', '—', '✓'] },
-    { label: 'Offline downloads', cells: ['—', '✓', '✓'] },
-];
+const plans_service_1 = require("../plans/plans.service");
+const public_defaults_1 = require("./public.defaults");
+var public_defaults_2 = require("./public.defaults");
+Object.defineProperty(exports, "DEFAULT_LANDING_HERO", { enumerable: true, get: function () { return public_defaults_2.DEFAULT_LANDING_HERO; } });
+Object.defineProperty(exports, "DEFAULT_LANDING_PRICING_TIERS", { enumerable: true, get: function () { return public_defaults_2.DEFAULT_LANDING_PRICING_TIERS; } });
+Object.defineProperty(exports, "DEFAULT_PRICING_COMPARE_ROWS", { enumerable: true, get: function () { return public_defaults_2.DEFAULT_PRICING_COMPARE_ROWS; } });
 let PublicService = class PublicService {
-    constructor(landingModel, landingPricingModel, courseModel, categoryModel, config) {
+    constructor(landingModel, landingPricingModel, courseModel, categoryModel, config, plansService) {
         this.landingModel = landingModel;
         this.landingPricingModel = landingPricingModel;
         this.courseModel = courseModel;
         this.categoryModel = categoryModel;
         this.config = config;
+        this.plansService = plansService;
     }
     async ensureLandingDoc() {
         let doc = await this.landingModel.findOne({ key: 'default' }).exec();
         if (!doc) {
-            doc = await this.landingModel.create({ ...exports.DEFAULT_LANDING_HERO });
+            doc = await this.landingModel.create({ ...public_defaults_1.DEFAULT_LANDING_HERO });
         }
         return doc;
     }
@@ -209,13 +72,13 @@ let PublicService = class PublicService {
         }
         const courses = featured.map((c) => (0, course_mapper_1.mapCourseToExplorerDto)(c, catMap.get(c.categoryId?.toString()) || '', mediaBase));
         return {
-            slides: landing.slides?.length ? landing.slides : exports.DEFAULT_LANDING_HERO.slides,
-            trustPills: landing.trustPills?.length ? landing.trustPills : exports.DEFAULT_LANDING_HERO.trustPills,
-            announcementBadge: landing.announcementBadge || exports.DEFAULT_LANDING_HERO.announcementBadge,
-            visualMeta: landing.visualMeta?.length ? landing.visualMeta : exports.DEFAULT_LANDING_HERO.visualMeta,
-            referralBonusLabel: landing.referralBonusLabel || exports.DEFAULT_LANDING_HERO.referralBonusLabel,
-            statCards: landing.statCards?.length ? landing.statCards : exports.DEFAULT_LANDING_HERO.statCards,
-            offers: landing.offers?.length ? landing.offers : exports.DEFAULT_LANDING_HERO.offers,
+            slides: landing.slides?.length ? landing.slides : public_defaults_1.DEFAULT_LANDING_HERO.slides,
+            trustPills: landing.trustPills?.length ? landing.trustPills : public_defaults_1.DEFAULT_LANDING_HERO.trustPills,
+            announcementBadge: landing.announcementBadge || public_defaults_1.DEFAULT_LANDING_HERO.announcementBadge,
+            visualMeta: landing.visualMeta?.length ? landing.visualMeta : public_defaults_1.DEFAULT_LANDING_HERO.visualMeta,
+            referralBonusLabel: landing.referralBonusLabel || public_defaults_1.DEFAULT_LANDING_HERO.referralBonusLabel,
+            statCards: landing.statCards?.length ? landing.statCards : public_defaults_1.DEFAULT_LANDING_HERO.statCards,
+            offers: landing.offers?.length ? landing.offers : public_defaults_1.DEFAULT_LANDING_HERO.offers,
             courses,
         };
     }
@@ -252,15 +115,15 @@ let PublicService = class PublicService {
         if (!doc) {
             return this.landingPricingModel.create({
                 key: 'default',
-                tiers: exports.DEFAULT_LANDING_PRICING_TIERS,
-                compareRows: exports.DEFAULT_PRICING_COMPARE_ROWS,
+                tiers: public_defaults_1.DEFAULT_LANDING_PRICING_TIERS,
+                compareRows: public_defaults_1.DEFAULT_PRICING_COMPARE_ROWS,
             });
         }
         const updates = {};
         if (!doc.tiers?.length)
-            updates.tiers = exports.DEFAULT_LANDING_PRICING_TIERS;
+            updates.tiers = public_defaults_1.DEFAULT_LANDING_PRICING_TIERS;
         if (!doc.compareRows?.length)
-            updates.compareRows = exports.DEFAULT_PRICING_COMPARE_ROWS;
+            updates.compareRows = public_defaults_1.DEFAULT_PRICING_COMPARE_ROWS;
         if (Object.keys(updates).length) {
             return this.landingPricingModel
                 .findOneAndUpdate({ key: 'default' }, { $set: updates }, { new: true })
@@ -270,7 +133,7 @@ let PublicService = class PublicService {
     }
     async getPricingPlansPayload() {
         const doc = await this.ensureLandingPricing();
-        const tiers = doc.tiers?.length ? doc.tiers : exports.DEFAULT_LANDING_PRICING_TIERS;
+        const tiers = doc.tiers?.length ? doc.tiers : public_defaults_1.DEFAULT_LANDING_PRICING_TIERS;
         const tc = tiers.length;
         const padCells = (cells) => {
             const out = (cells || []).slice(0, tc);
@@ -281,7 +144,7 @@ let PublicService = class PublicService {
         const compareRows = doc.compareRows?.length &&
             doc.compareRows.every((r) => Array.isArray(r.cells) && r.cells.length === tc)
             ? doc.compareRows
-            : exports.DEFAULT_PRICING_COMPARE_ROWS.map((row) => ({
+            : public_defaults_1.DEFAULT_PRICING_COMPARE_ROWS.map((row) => ({
                 label: row.label,
                 cells: padCells(row.cells),
             }));
@@ -343,7 +206,7 @@ let PublicService = class PublicService {
         const plain = (0, class_transformer_1.instanceToPlain)(body);
         await this.ensureLandingPricing();
         const current = await this.landingPricingModel.findOne({ key: 'default' }).lean().exec();
-        const nextTiers = plain.tiers ?? current?.tiers ?? exports.DEFAULT_LANDING_PRICING_TIERS;
+        const nextTiers = plain.tiers ?? current?.tiers ?? public_defaults_1.DEFAULT_LANDING_PRICING_TIERS;
         const tierCount = Array.isArray(nextTiers) ? nextTiers.length : 0;
         if (!tierCount)
             throw new common_1.BadRequestException('No pricing tiers configured');
@@ -357,7 +220,11 @@ let PublicService = class PublicService {
             $set.compareRows = plain.compareRows;
         }
         if (Object.keys($set).length) {
-            return this.landingPricingModel.findOneAndUpdate({ key: 'default' }, { $set }, { new: true }).exec();
+            const doc = await this.landingPricingModel
+                .findOneAndUpdate({ key: 'default' }, { $set }, { new: true })
+                .exec();
+            await this.plansService.syncFromLandingPricing();
+            return doc;
         }
         return this.landingPricingModel.findOne({ key: 'default' }).exec();
     }
@@ -373,6 +240,7 @@ exports.PublicService = PublicService = __decorate([
         mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,
-        config_1.ConfigService])
+        config_1.ConfigService,
+        plans_service_1.PlansService])
 ], PublicService);
 //# sourceMappingURL=public.service.js.map

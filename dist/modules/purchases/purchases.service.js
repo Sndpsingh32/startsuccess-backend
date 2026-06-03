@@ -17,18 +17,30 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const purchase_schema_1 = require("./purchase.schema");
+const payment_schema_1 = require("../payment/schemas/payment.schema");
 const users_service_1 = require("../users/users.service");
 const courses_service_1 = require("../courses/courses.service");
 const revenue_distribution_service_1 = require("../commission/revenue-distribution.service");
 const settings_service_1 = require("../settings/settings.service");
+const plans_service_1 = require("../plans/plans.service");
 const app_constants_1 = require("../../common/constants/app.constants");
 let PurchasesService = class PurchasesService {
-    constructor(purchaseModel, usersService, coursesService, revenueDistributionService, settingsService) {
+    constructor(purchaseModel, paymentModel, usersService, coursesService, revenueDistributionService, settingsService, plansService) {
         this.purchaseModel = purchaseModel;
+        this.paymentModel = paymentModel;
         this.usersService = usersService;
         this.coursesService = coursesService;
         this.revenueDistributionService = revenueDistributionService;
         this.settingsService = settingsService;
+        this.plansService = plansService;
+    }
+    async hasCourseAccess(userId, courseOid) {
+        if (await this.hasCompletedCourseAccess(userId, courseOid))
+            return true;
+        const buyer = await this.usersService.findById(userId);
+        if (!buyer?.accountActive || !buyer.planId)
+            return false;
+        return this.plansService.planIncludesCourse(buyer.planId, courseOid);
     }
     effectiveCoursePrice(course) {
         const d = course.discountPrice;
@@ -86,13 +98,19 @@ let PurchasesService = class PurchasesService {
                 throw new common_1.BadRequestException('Cannot purchase using your own coupon');
             }
         }
+        let paymentStatus = app_constants_1.PaymentStatus.PENDING;
+        if (purchase.paymentId) {
+            const pay = await this.paymentModel.findById(purchase.paymentId).lean();
+            if (pay?.status === app_constants_1.PaymentStatus.COMPLETED)
+                paymentStatus = app_constants_1.PaymentStatus.COMPLETED;
+        }
         const doc = new this.purchaseModel({
             courseId: courseOid,
             buyerId: buyerOid,
             couponUsed: effectiveCoupon,
             amount: paid,
             currency: purchase.currency || 'INR',
-            paymentStatus: app_constants_1.PaymentStatus.PENDING,
+            paymentStatus,
             paymentId: purchase.paymentId || null,
             commissionsDistributed: false,
             courseSnapshot: {
@@ -100,6 +118,7 @@ let PurchasesService = class PurchasesService {
                 slug: course.slug,
                 price: course.price,
                 discountPrice: course.discountPrice,
+                thumbnailUrl: course.thumbnailUrl,
             },
         });
         const saved = await doc.save();
@@ -170,10 +189,13 @@ exports.PurchasesService = PurchasesService;
 exports.PurchasesService = PurchasesService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(purchase_schema_1.Purchase.name)),
+    __param(1, (0, mongoose_1.InjectModel)(payment_schema_1.Payment.name)),
     __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
         users_service_1.UsersService,
         courses_service_1.CoursesService,
         revenue_distribution_service_1.RevenueDistributionService,
-        settings_service_1.SettingsService])
+        settings_service_1.SettingsService,
+        plans_service_1.PlansService])
 ], PurchasesService);
 //# sourceMappingURL=purchases.service.js.map

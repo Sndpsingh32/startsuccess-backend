@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.WithdrawalsController = void 0;
 const common_1 = require("@nestjs/common");
+const razorpay_payout_service_1 = require("../payout/razorpay-payout.service");
 const swagger_1 = require("@nestjs/swagger");
 const withdrawals_service_1 = require("./withdrawals.service");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
@@ -23,8 +24,9 @@ const roles_decorator_1 = require("../../common/decorators/roles.decorator");
 const app_constants_1 = require("../../common/constants/app.constants");
 const app_constants_2 = require("../../common/constants/app.constants");
 let WithdrawalsController = class WithdrawalsController {
-    constructor(svc) {
+    constructor(svc, razorpayPayout) {
         this.svc = svc;
+        this.razorpayPayout = razorpayPayout;
     }
     request(user, body) {
         return this.svc.request(user._id.toString(), body);
@@ -39,8 +41,19 @@ let WithdrawalsController = class WithdrawalsController {
             limit: parseInt(limit || '20', 10),
         });
     }
-    decide(id, body) {
-        return this.svc.decide(id, body.approve, body.adminNote);
+    decide(admin, id, body) {
+        return this.svc.decide(id, body.approve, body.adminNote, admin._id.toString());
+    }
+    syncPayout(id) {
+        return this.svc.syncPayoutStatus(id);
+    }
+    async razorpayxWebhook(req, signature, body) {
+        const raw = req.rawBody?.toString('utf8') ||
+            (typeof body === 'string' ? body : JSON.stringify(body ?? {}));
+        if (signature && !this.razorpayPayout.verifyWebhookSignature(raw, signature)) {
+            return { ok: false, error: 'invalid signature' };
+        }
+        return this.svc.handleRazorpayWebhook(body);
     }
 };
 exports.WithdrawalsController = WithdrawalsController;
@@ -80,15 +93,36 @@ __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(app_constants_1.UserRole.ADMIN),
     (0, swagger_1.ApiBearerAuth)(),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [Object, String, Object]),
     __metadata("design:returntype", void 0)
 ], WithdrawalsController.prototype, "decide", null);
+__decorate([
+    (0, common_1.Post)('admin/:id/sync-payout'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(app_constants_1.UserRole.ADMIN),
+    (0, swagger_1.ApiBearerAuth)(),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], WithdrawalsController.prototype, "syncPayout", null);
+__decorate([
+    (0, common_1.Post)('webhook/razorpayx'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Headers)('x-razorpay-signature')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:returntype", Promise)
+], WithdrawalsController.prototype, "razorpayxWebhook", null);
 exports.WithdrawalsController = WithdrawalsController = __decorate([
     (0, swagger_1.ApiTags)('withdrawals'),
     (0, common_1.Controller)('withdrawals'),
-    __metadata("design:paramtypes", [withdrawals_service_1.WithdrawalsService])
+    __metadata("design:paramtypes", [withdrawals_service_1.WithdrawalsService,
+        razorpay_payout_service_1.RazorpayPayoutService])
 ], WithdrawalsController);
 //# sourceMappingURL=withdrawals.controller.js.map

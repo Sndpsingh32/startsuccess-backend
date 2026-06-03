@@ -18,4 +18,20 @@ export declare class AnalyticsController {
     platformRevenue(): Promise<{
         platformRevenueTotal: any;
     }>;
+    leaderboard(period?: 'daily' | 'weekly' | 'monthly' | 'overall'): Promise<{
+        rank: number;
+        userId: any;
+        name: any;
+        email: any;
+        avatarUrl: any;
+        activeIncome: any;
+        passiveIncome: any;
+        totalEarnings: any;
+    }[]>;
+    incomeUsers(page?: string, limit?: string, search?: string): Promise<{
+        items: any[];
+        total: number;
+        page: number;
+        limit: number;
+    }>;
 }

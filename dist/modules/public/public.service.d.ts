@@ -6,16 +6,16 @@ import { CourseDocument } from '../courses/course.schema';
 import { CategoryDocument } from '../categories/category.schema';
 import { ExplorerCourseDto } from './course-mapper';
 import { PatchLandingPricingDto } from './dto/patch-landing-pricing.dto';
-export declare const DEFAULT_LANDING_HERO: Partial<LandingHero>;
-export declare const DEFAULT_LANDING_PRICING_TIERS: LandingPricingTier[];
-export declare const DEFAULT_PRICING_COMPARE_ROWS: LandingPricingCompareRow[];
+import { PlansService } from '../plans/plans.service';
+export { DEFAULT_LANDING_HERO, DEFAULT_LANDING_PRICING_TIERS, DEFAULT_PRICING_COMPARE_ROWS, } from './public.defaults';
 export declare class PublicService {
     private readonly landingModel;
     private readonly landingPricingModel;
     private readonly courseModel;
     private readonly categoryModel;
     private readonly config;
-    constructor(landingModel: Model<LandingHeroDocument>, landingPricingModel: Model<LandingPricingDocument>, courseModel: Model<CourseDocument>, categoryModel: Model<CategoryDocument>, config: ConfigService);
+    private readonly plansService;
+    constructor(landingModel: Model<LandingHeroDocument>, landingPricingModel: Model<LandingPricingDocument>, courseModel: Model<CourseDocument>, categoryModel: Model<CategoryDocument>, config: ConfigService, plansService: PlansService);
     ensureLandingDoc(): Promise<LandingHeroDocument>;
     private categoryNameMap;
     getHeroPayload(): Promise<{
@@ -25,6 +25,8 @@ export declare class PublicService {
             highlight: string;
             suffix: string;
             description: string;
+            imageUrl?: string;
+            videoUrl?: string;
         }[];
         trustPills: string[];
         announcementBadge: string;

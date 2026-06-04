@@ -27,6 +27,7 @@ import { PublicModule } from './modules/public/public.module';
 import { KycModule } from './modules/kyc/kyc.module';
 import { MailModule } from './modules/mail/mail.module';
 import { PlanSalesModule } from './modules/plan-sales/plan-sales.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { PlanSalesModule } from './modules/plan-sales/plan-sales.module';
     PublicModule,
     KycModule,
     PlanSalesModule,
+    HealthModule,
   ],
   providers: [
     {

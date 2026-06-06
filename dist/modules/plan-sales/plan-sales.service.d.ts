@@ -53,6 +53,8 @@ export declare class PlanSalesService {
         attributionOnly: boolean;
         planId: string;
         planName: string;
+        originalPrice: number;
+        promoPrice: any;
         listPrice: number;
         memberPromoDiscountPercent: number;
     }>;

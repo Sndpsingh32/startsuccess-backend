@@ -42,18 +42,19 @@ let PlansService = class PlansService {
                 .map((id) => id?.trim())
                 .filter((id) => id && mongoose_2.Types.ObjectId.isValid(id))
                 .map((id) => new mongoose_2.Types.ObjectId(id));
+            const planSet = {
+                tierId: tier.id,
+                name: tier.name,
+                price: tier.price,
+                period: tier.period,
+                features: tier.features ?? [],
+                courseIds,
+                active: true,
+            };
+            if (tier.promoPrice != null)
+                planSet.promoPrice = tier.promoPrice;
             await this.planModel
-                .findOneAndUpdate({ tierId: tier.id }, {
-                $set: {
-                    tierId: tier.id,
-                    name: tier.name,
-                    price: tier.price,
-                    period: tier.period,
-                    features: tier.features ?? [],
-                    courseIds,
-                    active: true,
-                },
-            }, { upsert: true, new: true })
+                .findOneAndUpdate({ tierId: tier.id }, { $set: planSet }, { upsert: true, new: true })
                 .exec();
         }
     }

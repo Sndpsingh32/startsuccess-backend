@@ -35,10 +35,12 @@ const admin_module_1 = require("./modules/admin/admin.module");
 const coupons_module_1 = require("./modules/coupons/coupons.module");
 const reviews_module_1 = require("./modules/reviews/reviews.module");
 const banners_module_1 = require("./modules/banners/banners.module");
+const team_members_module_1 = require("./modules/team-members/team-members.module");
 const public_module_1 = require("./modules/public/public.module");
 const kyc_module_1 = require("./modules/kyc/kyc.module");
 const mail_module_1 = require("./modules/mail/mail.module");
 const plan_sales_module_1 = require("./modules/plan-sales/plan-sales.module");
+const health_module_1 = require("./modules/health/health.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -79,9 +81,11 @@ exports.AppModule = AppModule = __decorate([
             coupons_module_1.CouponsModule,
             reviews_module_1.ReviewsModule,
             banners_module_1.BannersModule,
+            team_members_module_1.TeamMembersModule,
             public_module_1.PublicModule,
             kyc_module_1.KycModule,
             plan_sales_module_1.PlanSalesModule,
+            health_module_1.HealthModule,
         ],
         providers: [
             {
